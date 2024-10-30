@@ -1,33 +1,120 @@
-# CraftQuery API
+<div align="center">
+	<a href="https://packagist.org/packages/samuelreichoer/craft-query-api"  align="center">
+		<img src="https://online-images-sr.netlify.app/assets/craft-query-api.png" width="100" alt="Craft Query API">
+	</a>
+  <br>
+  <br>
+	<h1 align="center">The Query API for Craft CMS</h1>
+  <p align="center">
+    Craft Query API is a Craft CMS plugin to use the loved query builder in your favorite js-framework.
+  </p>
+  <br />
+</div>
 
-A plugin that speeds up development in headless mode with custom fetch queries.
+<p align="center">
+  <a href="https://packagist.org/packages/samuelreichoer/craft-query-api">
+    <img src="https://img.shields.io/packagist/v/samuelreichoer/craft-query-api?label=version">
+  </a>
+  <a href="https://packagist.org/packages/samuelreichoer/craft-query-api">
+    <img src="https://img.shields.io/packagist/dt/samuelreichoer/craft-query-api?color=blue">
+  </a>
+  <a href="https://packagist.org/packages/samuelreichoer/craft-query-api">
+    <img src="https://img.shields.io/packagist/php-v/samuelreichoer/craft-query-api">
+  </a>
+  <a href="https://packagist.org/packages/samuelreichoer/craft-query-api">
+    <img src="https://img.shields.io/packagist/l/samuelreichoer/craft-query-api">
+  </a>
+</p>
+
 
 > [!WARNING]  
-> This plugin is still in her early days and important features may change.
+> This npm package is still in production and important features may change.
+
+## Features
+- API to query addresses, assets, entries and users based on url parameters.
+- API for query all urls of every active page with template for prerendering.
+- Automatic detection of imagerx transforms.
+- Automatic detection of native and custom fields on all elementTypes.
 
 ## Requirements
 
 This plugin requires Craft CMS 5.0.0 or later, and PHP 8.2 or later.
 
-## Installation
+## Qick start
 
-You can install this plugin from the Plugin Store or with Composer.
+1. Set up a craft project by using that guide: https://craftcms.com/docs/getting-started-tutorial/install/
+2. Install the Craft Query API Plugin using that command: 
+    ```bash
+    composer require samuelreichoer/craft-query-api && php craft plugin/install craft-query-api
+    ```
+3. Add following config to prevent cors origin errors in that file `config/app.web.php`
+    ```php
+      <?php
 
-#### From the Plugin Store
+      return [
+          'as corsFilter' => [
+              'class' => \craft\filters\Cors::class,
 
-Go to the Plugin Store in your project’s Control Panel and search for “Craft Query API”. Then press “Install”.
+            // Add your origins here
+              'cors' => [
+                  'Origin' => [
+                      'http://localhost:3000',
+                      'http://localhost:5173',
+                  ],
+                  'Access-Control-Request-Method' => ['GET'],
+                  'Access-Control-Request-Headers' => ['*'],
+                  'Access-Control-Allow-Credentials' => true,
+                  'Access-Control-Max-Age' => 86400,
+                  'Access-Control-Expose-Headers' => [],
+              ],
+          ],
+      ];
+    ```
 
-#### With Composer
+4. That's it you can test it by hitting that endpoint `${PRIMARY_SITE_URL}/v1/api/customQuery`. You should get an empty array as response. 
 
-Open your terminal and run the following commands:
+## Optional things to configure:
 
-```bash
-# tell Composer to load the plugin
-composer require samuel-reichoer/craft-query-api
+### Set headless mode in your `config/general.php` to `true`
 
-# tell Craft to install the plugin
-./craft plugin/install craft-query-api
+Read more about the headless mode [here](https://craftcms.com/docs/getting-started-tutorial/more/graphql.html#optional-enable-headless-mode).
+
+### Tell Craft where your frontend lives
+
+This is important, to get previews of entries working.
+
+Add a new env var:
 ```
+WEBSITE_URL="http://localhost:3000"
+```
+
+Add new alias in the config/general.php:
+```
+->aliases([
+  '@web' => getenv('PRIMARY_SITE_URL'),
+  '@websiteUrl' => getenv('WEBSITE_URL'),
+])
+```
+And finally go to your control panel settings -> sites -> and change the base URL of your Site. 
+
+### Configure ImagerX
+
+If you are using ImagerX (what I recommend) then you have to generate all transforms of the images before you can query them. Therefore you need a `imager-x-generate.php` File in your config folder with all named transforms in it. This can look like that: 
+```php
+<?php
+
+return [
+    'volumes' => [
+        'images' => ['auto', 'square', 'landscape', 'portrait', 'dominantColor'],
+    ]
+];
+```
+
+The plugin will automatically detect the named transforms and widths defined in your `imager-x-transforms.php`. In the response, you'll get an object where the key is the name of the transform, and the value is a srcset of all defined transforms. 
+
+### Configure SEO Matic
+
+Seo Matic has its own Endpoints. You can enable these in the plugin setting. 
 
 ## Further Resources
 
