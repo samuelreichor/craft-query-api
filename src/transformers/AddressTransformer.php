@@ -6,22 +6,22 @@ use craft\elements\Address;
 
 class AddressTransformer extends BaseTransformer
 {
-  private Address $address;
+    private Address $address;
 
-  public function __construct(Address $address)
-  {
-    $this->address = $address;
-  }
+    public function __construct(Address $address)
+    {
+        $this->address = $address;
+    }
 
-  /**
-   * @param array $predefinedFields
-   * @return array
-   */
-  public function getTransformedData(array $predefinedFields = []): array
-  {
-    $metaData = $this->getMetaData();
+    /**
+     * @param array $predefinedFields
+     * @return array
+     */
+    public function getTransformedData(array $predefinedFields = []): array
+    {
+        $metaData = $this->getMetaData();
 
-    return [
+        return [
         'metadata' => $metaData,
         'title' => $this->address->title ?? '',
         'addressLine1' => $this->address->addressLine1 ?? '',
@@ -31,19 +31,19 @@ class AddressTransformer extends BaseTransformer
         'locality' => $this->address->locality ?? '',
         'postalCode' => $this->address->postalCode ?? '',
     ];
-  }
+    }
 
-  /**
-   * Retrieves metadata from the Address.
-   *
-   * @return array
-   */
-  protected function getMetaData(): array
-  {
-    return [
+    /**
+     * Retrieves metadata from the Address.
+     *
+     * @return array
+     */
+    protected function getMetaData(): array
+    {
+        return [
         'id' => $this->address->id,
         'dateCreated' => $this->address->dateCreated,
         'dateUpdated' => $this->address->dateUpdated,
     ];
-  }
+    }
 }

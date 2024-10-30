@@ -1,14 +1,12 @@
 {
-  "name": "samuel-reichoer/craft-query-api",
+  "name": "samuelreichoer/craft-query-api",
   "description": "Speeds up development in headless mode with custom fetch queries",
   "type": "craft-plugin",
   "license": "MIT",
   "support": {
     "email": "samuelreichor@gmail.com",
     "issues": "https://github.com/samuelreichor/craft-query-api/issues?state=open",
-    "source": "https://github.com/samuelreichor/craft-query-api",
-    "docs": "https://github.com/samuelreichor/craft-query-api",
-    "rss": "https://github.com/samuelreichor/craft-query-api/releases.atom"
+    "source": "https://github.com/samuelreichor/craft-query-api"
   },
   "require": {
     "php": ">=8.2",
@@ -37,6 +35,7 @@
   },
   "config": {
     "sort-packages": true,
+    "optimize-autoloader": true,
     "platform": {
       "php": "8.2"
     },
