@@ -8,3 +8,6 @@
 
 ## 1.0.2 - 2024-10.30
 - Add more information to the readme. Change Changelog format
+
+## 1.0.3 - 2024-10.31
+- Change composer package name to my real repo name.
