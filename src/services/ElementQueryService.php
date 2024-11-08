@@ -19,11 +19,11 @@ class ElementQueryService
     private array $allowedDefaultMethods = ['limit', 'id', 'status', 'offset', 'orderBy'];
 
     private array $allowedMethods = [
-      'addresses' => ['addressLine1', 'addressLine2', 'addressLine3', 'locality', 'organization', 'fullName'],
-      'assets' => ['volume', 'kind', 'filename', 'site', 'siteId'],
-      'entries' => ['slug', 'uri', 'section', 'postDate', 'site', 'siteId'],
-      'users' => ['group', 'groupId', 'authorOf', 'email', 'fullName', 'hasPhoto'],
-  ];
+        'addresses' => ['addressLine1', 'addressLine2', 'addressLine3', 'locality', 'organization', 'fullName'],
+        'assets' => ['volume', 'kind', 'filename', 'site', 'siteId'],
+        'entries' => ['slug', 'uri', 'section', 'postDate', 'site', 'siteId'],
+        'users' => ['group', 'groupId', 'authorOf', 'email', 'fullName', 'hasPhoto'],
+    ];
 
     /**
      * Handles the query execution for all element types.
@@ -57,11 +57,11 @@ class ElementQueryService
         $cacheInfo = Craft::$app->getElements()->stopCollectingCacheInfo();
 
         Craft::$app->getCache()->set(
-        $cacheKey,
-        $queriedData,
-        $duration,
-        $cacheInfo[0]
-    );
+            $cacheKey,
+            $queriedData,
+            $duration,
+            $cacheInfo[0]
+        );
         return $queriedData;
     }
 
@@ -74,10 +74,10 @@ class ElementQueryService
         // Get the query object based on element type
         $query = match ($elementType) {
             'addresses' => Address::find(),
-      'assets' => Asset::find(),
-      'entries' => Entry::find(),
-      'users' => User::find(),
-      default => throw new Exception('Query for this element type is not yet implemented'),
+            'assets' => Asset::find(),
+            'entries' => Entry::find(),
+            'users' => User::find(),
+            default => throw new Exception('Query for this element type is not yet implemented'),
         };
 
         $allowedMethods = $this->getAllowedMethods($elementType);
