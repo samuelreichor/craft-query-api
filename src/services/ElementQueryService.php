@@ -31,7 +31,8 @@ class ElementQueryService
      */
     public function executeQuery(string $elementType, array $params): array
     {
-        $duration = App::env('CRAFT_ENVIRONMENT') === 'dev' ? 0 : 3600;
+        $craftDuration = Craft::$app->getConfig()->getGeneral()->cacheDuration;
+        $duration = App::env('CRAFT_ENVIRONMENT') === 'dev' ? 0 : $craftDuration;
         $hashedParamsKey = Utils::generateCacheKey($params);
         $cacheKey = 'queryapi_' . $elementType . '_' . $hashedParamsKey;
 
