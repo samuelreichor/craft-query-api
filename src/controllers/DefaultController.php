@@ -100,10 +100,10 @@ class DefaultController extends Controller
         $allSectionIds = Craft::$app->entries->getAllSectionIds();
         $allUrls = [];
         $allEntries = Entry::find()
-          ->siteId($siteIds)
-          ->status('live')
-          ->sectionId($allSectionIds)
-          ->all();
+            ->siteId($siteIds)
+            ->status('live')
+            ->sectionId($allSectionIds)
+            ->all();
 
         foreach ($allEntries as $entry) {
             $allUrls[] = $entry->getUrl();
@@ -112,11 +112,11 @@ class DefaultController extends Controller
         $cacheInfo = Craft::$app->getElements()->stopCollectingCacheInfo();
 
         Craft::$app->getCache()->set(
-        $cacheKey,
-        $allUrls,
-        $duration,
-        $cacheInfo[0]
-    );
+            $cacheKey,
+            $allUrls,
+            $duration,
+            $cacheInfo[0]
+        );
 
         return $this->asJson($allUrls);
     }

@@ -115,14 +115,14 @@ abstract class BaseTransformer
 
         return match ($fieldClass) {
             'craft\fields\Assets' => $this->transformAssets($fieldValue->all()),
-      'craft\fields\Matrix' => $this->transformMatrixField($fieldValue->all()),
-      'craft\fields\Entries' => $this->transformEntries($fieldValue->all()),
-      'craft\fields\Users' => $this->transformUsers($fieldValue->all()),
-      'craft\fields\Categories' => $this->transformCategories($fieldValue->all()),
-      'craft\fields\Tags' => $this->transformTags($fieldValue->all()),
-      'craft\fields\Link' => $this->transformLinks($fieldValue),
-      'craft\fields\Addresses' => $this->transformAddresses($fieldValue->all()),
-      default => $fieldValue,
+            'craft\fields\Matrix' => $this->transformMatrixField($fieldValue->all()),
+            'craft\fields\Entries' => $this->transformEntries($fieldValue->all()),
+            'craft\fields\Users' => $this->transformUsers($fieldValue->all()),
+            'craft\fields\Categories' => $this->transformCategories($fieldValue->all()),
+            'craft\fields\Tags' => $this->transformTags($fieldValue->all()),
+            'craft\fields\Link' => $this->transformLinks($fieldValue),
+            'craft\fields\Addresses' => $this->transformAddresses($fieldValue->all()),
+            default => $fieldValue,
         };
     }
 
@@ -140,13 +140,13 @@ abstract class BaseTransformer
         }
 
         switch ($fieldClass) {
-      case 'craft\fieldlayoutelements\users\PhotoField':
-        $assetTransformer = new AssetTransformer($fieldValue);
-        return $assetTransformer->getTransformedData();
+            case 'craft\fieldlayoutelements\users\PhotoField':
+                $assetTransformer = new AssetTransformer($fieldValue);
+                return $assetTransformer->getTransformedData();
 
-      default:
-        return $fieldValue;
-    }
+            default:
+                return $fieldValue;
+        }
     }
 
     /**
@@ -172,16 +172,16 @@ abstract class BaseTransformer
      */
     protected function transformMatrixField(array $matrixFields): array
     {
-        if (empty($matrixFields)) {
-            return [];
-        }
-
         $transformedData = [];
 
         foreach ($matrixFields as $block) {
             $blockData = [
-          'type' => $block->type->handle,
-      ];
+                'type' => $block->type->handle,
+            ];
+
+            if ($block->title) {
+                $blockData['title'] = $block->title;
+            }
 
             foreach ($block->getFieldValues() as $fieldHandle => $fieldValue) {
                 $field = $block->getFieldLayout()->getFieldByHandle($fieldHandle);

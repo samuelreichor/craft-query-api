@@ -53,12 +53,12 @@ class JsonTransformerService
     {
         return match (true) {
             $element instanceof Entry => new EntryTransformer($element),
-      $element instanceof Asset => new AssetTransformer($element),
-      $element instanceof User => new UserTransformer($element),
-      $element instanceof Address => new AddressTransformer($element),
-      $element instanceof Category => new CategoryTransformer($element),
-      $element instanceof Tag => new TagTransformer($element),
-      default => throw new Exception('Unsupported element type'),
+            $element instanceof Asset => new AssetTransformer($element),
+            $element instanceof User => new UserTransformer($element),
+            $element instanceof Address => new AddressTransformer($element),
+            $element instanceof Category => new CategoryTransformer($element),
+            $element instanceof Tag => new TagTransformer($element),
+            default => throw new Exception('Unsupported element type'),
         };
     }
 }
