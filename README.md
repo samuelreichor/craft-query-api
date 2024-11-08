@@ -1,5 +1,5 @@
 <div align="center">
-	<a href="https://packagist.org/packages/samuelreichoer/craft-query-api"  align="center">
+	<a href="https://packagist.org/packages/samuelreichor/craft-query-api"  align="center">
       <img src="https://online-images-sr.netlify.app/assets/craft-query-api.png" width="100" alt="Craft Query API">
 	</a>
   <br>
@@ -11,17 +11,17 @@
 </div>
 
 <p align="center">
-  <a href="https://packagist.org/packages/samuelreichoer/craft-query-api">
-    <img src="https://img.shields.io/packagist/v/samuelreichoer/craft-query-api?label=version&color=blue">
+  <a href="https://packagist.org/packages/samuelreichor/craft-query-api">
+    <img src="https://img.shields.io/packagist/v/samuelreichor/craft-query-api?label=version&color=blue">
   </a>
-  <a href="https://packagist.org/packages/samuelreichoer/craft-query-api">
-    <img src="https://img.shields.io/packagist/dt/samuelreichoer/craft-query-api?color=blue">
+  <a href="https://packagist.org/packages/samuelreichor/craft-query-api">
+    <img src="https://img.shields.io/packagist/dt/samuelreichor/craft-query-api?color=blue">
   </a>
-  <a href="https://packagist.org/packages/samuelreichoer/craft-query-api">
-    <img src="https://img.shields.io/packagist/php-v/samuelreichoer/craft-query-api?color=blue">
+  <a href="https://packagist.org/packages/samuelreichor/craft-query-api">
+    <img src="https://img.shields.io/packagist/php-v/samuelreichor/craft-query-api?color=blue">
   </a>
-  <a href="https://packagist.org/packages/samuelreichoer/craft-query-api">
-    <img src="https://img.shields.io/packagist/l/samuelreichoer/craft-query-api?color=blue">
+  <a href="https://packagist.org/packages/samuelreichor/craft-query-api">
+    <img src="https://img.shields.io/packagist/l/samuelreichor/craft-query-api?color=blue">
   </a>
 </p>
 
