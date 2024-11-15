@@ -47,9 +47,10 @@ class EntryTransformer extends BaseTransformer
      */
     protected function getMetaData(): array
     {
+        $isEntryWithSection = $this->entry->section !== null;
         return array_merge(parent::getMetaData(), [
             'entryType' => $this->entry->type->getHandle(),
-            'sectionId' => $this->entry->section->getId(),
+            'sectionId' => $isEntryWithSection ? $this->entry->section->getId() : null,
             'siteId' => $this->entry->site->id,
             'slug' => $this->entry->slug,
             'uri' => $this->entry->uri,
