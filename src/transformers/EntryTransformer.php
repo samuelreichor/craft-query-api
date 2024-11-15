@@ -48,14 +48,14 @@ class EntryTransformer extends BaseTransformer
     protected function getMetaData(): array
     {
         return array_merge(parent::getMetaData(), [
-        'sectionId' => $this->entry->sectionId,
-        'postDate' => $this->entry->postDate,
-        'siteId' => $this->entry->siteId,
-        'slug' => $this->entry->slug,
-        'uri' => $this->entry->uri,
-        'cpEditUrl' => $this->entry->cpEditUrl,
-        'status' => $this->entry->status,
-        'url' => $this->entry->url,
-    ]);
+            'entryType' => $this->entry->type->getHandle(),
+            'sectionId' => $this->entry->section->getId(),
+            'siteId' => $this->entry->site->id,
+            'slug' => $this->entry->slug,
+            'uri' => $this->entry->uri,
+            'cpEditUrl' => $this->entry->getCpEditUrl(),
+            'status' => $this->entry->getStatus(),
+            'url' => $this->entry->getUrl(),
+        ]);
     }
 }
