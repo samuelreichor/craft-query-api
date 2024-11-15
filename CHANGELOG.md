@@ -1,4 +1,4 @@
-# Release Notes for CraftQuery API
+# Release Notes for Craft Query API
 
 ## 1.0.0 - 2024-10.30
 - Initial release
@@ -20,3 +20,7 @@
 - Fix formatting issues in all php files.
 - Fix missing title field in matrix transformer.
 
+## 1.1.1 - 2024-11-15
+
+- Minimize json response data by deleting metadata that is not really useful.
+- Fix a bug of the entry transformer when entries without section get queried.
