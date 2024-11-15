@@ -37,9 +37,7 @@ class CategoryTransformer extends BaseTransformer
     protected function getMetaData(): array
     {
         return [
-        'id' => $this->category->id,
-        'dateCreated' => $this->category->dateCreated,
-        'dateUpdated' => $this->category->dateUpdated,
-    ];
+            'id' => $this->category->id,
+        ];
     }
 }

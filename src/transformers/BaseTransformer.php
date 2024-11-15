@@ -157,10 +157,8 @@ abstract class BaseTransformer
     protected function getMetaData(): array
     {
         return [
-        'id' => $this->element->id,
-        'dateCreated' => $this->element->dateCreated,
-        'dateUpdated' => $this->element->dateUpdated,
-    ];
+            'id' => $this->element->getId(),
+        ];
     }
 
     /**
@@ -200,6 +198,7 @@ abstract class BaseTransformer
      *
      * @throws ImageTransformException
      * @throws InvalidConfigException
+     * @throws InvalidFieldException
      */
     protected function transformAssets(array $assets): array
     {
@@ -222,11 +221,11 @@ abstract class BaseTransformer
         $transformedData = [];
         foreach ($entries as $entry) {
             $transformedData[] = [
-          'title' => $entry->title,
-          'slug' => $entry->slug,
-          'url' => $entry->url,
-          'id' => $entry->id,
-      ];
+                'title' => $entry->title,
+                'slug' => $entry->slug,
+                'url' => $entry->url,
+                'id' => $entry->id,
+            ];
         }
         return $transformedData;
     }
@@ -292,9 +291,9 @@ abstract class BaseTransformer
         }
 
         return [
-        'elementType' => $link->type,
-        'value' => $link->value,
-    ];
+            'elementType' => $link->type,
+            'value' => $link->value,
+        ];
     }
 
     /**

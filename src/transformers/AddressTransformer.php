@@ -41,9 +41,7 @@ class AddressTransformer extends BaseTransformer
     protected function getMetaData(): array
     {
         return [
-        'id' => $this->address->id,
-        'dateCreated' => $this->address->dateCreated,
-        'dateUpdated' => $this->address->dateUpdated,
-    ];
+            'id' => $this->address->id,
+        ];
     }
 }

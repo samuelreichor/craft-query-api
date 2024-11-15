@@ -22,11 +22,11 @@ class UserTransformer extends BaseTransformer
         $transformedFields = $this->getTransformedFields();
 
         return array_merge([
-        'metadata' => $this->getMetaData(),
-        'username' => $this->user->username,
-        'email' => $this->user->email,
-        'fullName' => $this->user->fullName,
-    ], $transformedFields);
+            'metadata' => $this->getMetaData(),
+            'username' => $this->user->username,
+            'email' => $this->user->email,
+            'fullName' => $this->user->fullName,
+        ], $transformedFields);
     }
 
     /**
@@ -37,11 +37,9 @@ class UserTransformer extends BaseTransformer
     protected function getMetaData(): array
     {
         return [
-        'id' => $this->user->id,
-        'status' => $this->user->status,
-        'cpEditUrl' => $this->user->cpEditUrl,
-        'dateCreated' => $this->user->dateCreated,
-        'dateUpdated' => $this->user->dateUpdated,
-    ];
+            'id' => $this->user->id,
+            'status' => $this->user->status,
+            'cpEditUrl' => $this->user->cpEditUrl,
+        ];
     }
 }
