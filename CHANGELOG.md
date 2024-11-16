@@ -24,3 +24,7 @@
 
 - Minimize json response data by deleting metadata that is not really useful.
 - Fix a bug of the entry transformer when entries without section get queried.
+
+## 1.1.2 - 2024-11-16
+
+- Add support for level, sectionId and type for entry queries.
