@@ -27,7 +27,7 @@
 
 
 > [!WARNING]  
-> This npm package is still in production and important features may change.
+> This plugin is still in production and important features may change.
 
 ## Features
 
