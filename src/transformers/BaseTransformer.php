@@ -2,18 +2,25 @@
 
 namespace samuelreichoer\queryapi\transformers;
 
+use Craft;
+use craft\base\Component;
 use craft\base\ElementInterface;
 use craft\errors\ImageTransformException;
 use craft\errors\InvalidFieldException;
+use samuelreichoer\queryapi\events\FieldTransformerEvent;
 use yii\base\InvalidConfigException;
 
-abstract class BaseTransformer
+abstract class BaseTransformer extends Component
 {
     protected ElementInterface $element;
+    public const EVENT_REGISTER_FIELD_TRANSFORMERS = 'registerTransformers';
+    private $customTransformers;
 
     public function __construct(ElementInterface $element)
     {
+        parent::__construct();
         $this->element = $element;
+        $this->registerCustomTransformers();
     }
 
     /**
@@ -111,6 +118,27 @@ abstract class BaseTransformer
     {
         if (!$fieldValue || !$fieldClass) {
             return null;
+        }
+
+        // Check for custom transformers from EVENT_REGISTER_FIELD_TRANSFORMERS
+        foreach ($this->customTransformers as $customTransformer) {
+            if ($customTransformer['fieldClass'] === $fieldClass) {
+                $transformerClass = $customTransformer['transformer'];
+
+                if (!class_exists($transformerClass)) {
+                    Craft::error("Transformer class {$transformerClass} not found.", 'queryApi');
+                    break;
+                }
+
+                $transformer = new $transformerClass($fieldValue);
+
+                if (!method_exists($transformer, 'getTransformedData')) {
+                    Craft::error("Transformer {$transformerClass} does not have a 'getTransformedData' method.", 'queryApi');
+                    return null;
+                }
+
+                return $transformer->getTransformedData();
+            }
         }
 
         return match ($fieldClass) {
@@ -310,5 +338,17 @@ abstract class BaseTransformer
             $transformedData[] = $userTransformer->getTransformedData();
         }
         return $transformedData;
+    }
+
+    /**
+     * Loads custom transformers via event.
+     */
+    protected function registerCustomTransformers(): void
+    {
+        if ($this->hasEventHandlers(self::EVENT_REGISTER_FIELD_TRANSFORMERS)) {
+            $event = new FieldTransformerEvent();
+            $this->trigger(self::EVENT_REGISTER_FIELD_TRANSFORMERS, $event);
+            $this->customTransformers = $event->transformers;
+        }
     }
 }
