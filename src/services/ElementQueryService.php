@@ -16,7 +16,7 @@ use samuelreichoer\queryapi\helpers\Utils;
 
 class ElementQueryService
 {
-    private array $allowedDefaultMethods = ['limit', 'id', 'status', 'offset', 'orderBy'];
+    private array $allowedDefaultMethods = ['limit', 'id', 'status', 'offset', 'orderBy', 'search'];
 
     private array $allowedMethods = [
         'addresses' => ['addressLine1', 'addressLine2', 'addressLine3', 'locality', 'organization', 'fullName'],

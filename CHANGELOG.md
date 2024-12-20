@@ -30,3 +30,7 @@
 - Add support for level, sectionId and type for entry queries.
 - Add `EVENT_REGISTER_FIELD_TRANSFORMERS` for defining custom field transformer.
 - Update Readme Typo
+
+## 1.1.3 - 2024-12-20
+
+- Add support for search query.
