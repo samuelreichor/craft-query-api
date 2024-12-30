@@ -8,6 +8,7 @@ use craft\base\ElementInterface;
 use craft\errors\ImageTransformException;
 use craft\errors\InvalidFieldException;
 use samuelreichoer\queryapi\events\RegisterFieldTransformersEvent;
+use samuelreichoer\queryapi\QueryApi;
 use yii\base\InvalidConfigException;
 
 abstract class BaseTransformer extends Component
@@ -16,11 +17,17 @@ abstract class BaseTransformer extends Component
     public const EVENT_REGISTER_FIELD_TRANSFORMERS = 'registerTransformers';
     private $customTransformers;
 
+    private array $excludeFieldClasses = ['nystudio107\seomatic\fields\SeoSettings'];
+
     public function __construct(ElementInterface $element)
     {
         parent::__construct();
         $this->element = $element;
         $this->registerCustomTransformers();
+
+        if (isset(QueryApi::getInstance()->getSettings()->excludeFieldClasses)) {
+            $this->excludeFieldClasses = array_merge($this->excludeFieldClasses, QueryApi::getInstance()->getSettings()->excludeFieldClasses);
+        }
     }
 
     /**
@@ -56,9 +63,6 @@ abstract class BaseTransformer extends Component
         $nativeFields = $fieldLayout ? $fieldLayout->getAvailableNativeFields() : [];
         $transformedFields = [];
 
-        $filteredOutClasses = [
-        'nystudio107\seomatic\fields\SeoSettings',
-    ];
 
         // Transform native fields if they are in predefinedFields (if specified)
         foreach ($nativeFields as $nativeField) {
@@ -76,7 +80,7 @@ abstract class BaseTransformer extends Component
             $fieldValue = $this->element->$fieldHandle;
             $fieldClass = get_class($nativeField);
 
-            if (in_array($fieldClass, $filteredOutClasses, true)) {
+            if (in_array($fieldClass, $this->excludeFieldClasses, true)) {
                 continue;
             }
 
@@ -94,8 +98,7 @@ abstract class BaseTransformer extends Component
 
             $fieldValue = $this->element->getFieldValue($fieldHandle);
             $fieldClass = get_class($field);
-
-            if (in_array($fieldClass, $filteredOutClasses, true)) {
+            if (in_array($fieldClass, $this->excludeFieldClasses, true)) {
                 continue;
             }
 
@@ -212,6 +215,12 @@ abstract class BaseTransformer extends Component
             foreach ($block->getFieldValues() as $fieldHandle => $fieldValue) {
                 $field = $block->getFieldLayout()->getFieldByHandle($fieldHandle);
                 $fieldClass = get_class($field);
+
+                // Exclude fields in matrix blocks
+                if (in_array($fieldClass, $this->excludeFieldClasses, true)) {
+                    continue;
+                }
+
                 $blockData[$fieldHandle] = $this->transformCustomField($fieldValue, $fieldClass);
             }
 
