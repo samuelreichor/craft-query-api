@@ -35,4 +35,5 @@
 
 - Add support for search query.
 - Add `EVENT_REGISTER_ELEMENT_TYPES` for defining custom element types.
+- Add settings for cache duration.
 - Change file and class name of `FieldTransformerEvent` to `RegisterFieldTransformersEvent`.

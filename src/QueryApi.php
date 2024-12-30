@@ -3,9 +3,11 @@
 namespace samuelreichoer\queryapi;
 
 use Craft;
+use craft\base\Model;
 use craft\base\Plugin;
 use craft\events\RegisterUrlRulesEvent;
 use craft\web\UrlManager;
+use samuelreichoer\queryapi\models\Settings;
 use yii\base\Event;
 use yii\log\FileTarget;
 
@@ -49,6 +51,11 @@ class QueryApi extends Plugin
           ]);
         }
     );
+    }
+
+    protected function createSettingsModel(): ?Model
+    {
+        return new Settings();
     }
 
     private function initLogger(): void
