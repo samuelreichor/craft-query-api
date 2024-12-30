@@ -35,3 +35,4 @@
 
 - Add support for search query.
 - Add `EVENT_REGISTER_ELEMENT_TYPES` for defining custom element types.
+- Change file and class name of `FieldTransformerEvent` to `RegisterFieldTransformersEvent`.

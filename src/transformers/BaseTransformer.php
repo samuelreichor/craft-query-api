@@ -7,7 +7,7 @@ use craft\base\Component;
 use craft\base\ElementInterface;
 use craft\errors\ImageTransformException;
 use craft\errors\InvalidFieldException;
-use samuelreichoer\queryapi\events\FieldTransformerEvent;
+use samuelreichoer\queryapi\events\RegisterFieldTransformersEvent;
 use yii\base\InvalidConfigException;
 
 abstract class BaseTransformer extends Component
@@ -346,7 +346,7 @@ abstract class BaseTransformer extends Component
     protected function registerCustomTransformers(): void
     {
         if ($this->hasEventHandlers(self::EVENT_REGISTER_FIELD_TRANSFORMERS)) {
-            $event = new FieldTransformerEvent();
+            $event = new RegisterFieldTransformersEvent();
             $this->trigger(self::EVENT_REGISTER_FIELD_TRANSFORMERS, $event);
             $this->customTransformers = $event->transformers;
         }
