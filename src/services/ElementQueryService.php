@@ -11,10 +11,10 @@ use craft\elements\Entry;
 use craft\elements\User;
 use craft\fields\BaseRelationField;
 use craft\fields\Matrix;
-use craft\helpers\App;
 use Exception;
 use samuelreichoer\queryapi\events\RegisterElementTypesEvent;
 use samuelreichoer\queryapi\helpers\Utils;
+use samuelreichoer\queryapi\QueryApi;
 
 class ElementQueryService extends Component
 {
@@ -51,8 +51,13 @@ class ElementQueryService extends Component
      */
     public function executeQuery(string $elementType, array $params): array
     {
-        $craftDuration = Craft::$app->getConfig()->getGeneral()->cacheDuration;
-        $duration = App::env('CRAFT_ENVIRONMENT') === 'dev' ? 0 : $craftDuration;
+        // Set cache duration of config and fallback to general craft cache duration
+        if (isset(QueryApi::getInstance()->getSettings()->cacheDuration)) {
+            $duration = QueryApi::getInstance()->getSettings()->cacheDuration;
+        } else {
+            $duration = Craft::$app->getConfig()->getGeneral()->cacheDuration;
+        }
+
         $hashedParamsKey = Utils::generateCacheKey($params);
         $cacheKey = 'queryapi_' . $elementType . '_' . $hashedParamsKey;
 
