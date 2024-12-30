@@ -34,3 +34,4 @@
 ## 1.1.3 - 2024-12-20
 
 - Add support for search query.
+- Add `EVENT_REGISTER_ELEMENT_TYPES` for defining custom element types.

@@ -21,6 +21,15 @@ use yii\base\InvalidConfigException;
 
 class JsonTransformerService
 {
+    private array $transformers;
+    private ElementQueryService $elementQueryService;
+
+    public function __construct(ElementQueryService $elementQueryService)
+    {
+        $this->elementQueryService = $elementQueryService;
+        $this->transformers = $this->elementQueryService->getCustomTransformers();
+    }
+
     /**
      * Transforms an array of elements using the appropriate transformers.
      *
@@ -51,6 +60,16 @@ class JsonTransformerService
      */
     private function getTransformerForElement(mixed $element): BaseTransformer
     {
+
+        // Register custom transformers for custom element types
+        if (count($this->transformers) > 0) {
+            $elementTypeHandle = get_class($element);
+            if (isset($this->transformers[$elementTypeHandle])) {
+                $transformerClass = $this->transformers[$elementTypeHandle];
+                return new $transformerClass($element);
+            }
+        }
+
         return match (true) {
             $element instanceof Entry => new EntryTransformer($element),
             $element instanceof Asset => new AssetTransformer($element),

@@ -3,6 +3,7 @@
 namespace samuelreichoer\queryapi\services;
 
 use Craft;
+use craft\base\Component;
 use craft\base\FieldInterface;
 use craft\elements\Address;
 use craft\elements\Asset;
@@ -12,18 +13,37 @@ use craft\fields\BaseRelationField;
 use craft\fields\Matrix;
 use craft\helpers\App;
 use Exception;
+use samuelreichoer\queryapi\events\RegisterElementTypesEvent;
 use samuelreichoer\queryapi\helpers\Utils;
 
-class ElementQueryService
+class ElementQueryService extends Component
 {
-    private array $allowedDefaultMethods = ['limit', 'id', 'status', 'offset', 'orderBy', 'search'];
+    public const EVENT_REGISTER_ELEMENT_TYPES = 'registerElementTypes';
+
+    public array $customTransformer = [];
+
+    private array $elementTypeMap = [
+        'addresses' => Address::class,
+        'assets' => Asset::class,
+        'entries' => Entry::class,
+        'users' => User::class,
+    ];
 
     private array $allowedMethods = [
-        'addresses' => ['addressLine1', 'addressLine2', 'addressLine3', 'locality', 'organization', 'fullName'],
-        'assets' => ['volume', 'kind', 'filename', 'site', 'siteId'],
-        'entries' => ['slug', 'uri', 'section', 'postDate', 'site', 'siteId', 'level', 'sectionId', 'type'],
-        'users' => ['group', 'groupId', 'authorOf', 'email', 'fullName', 'hasPhoto'],
+        'addresses' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'addressLine1', 'addressLine2', 'addressLine3', 'locality', 'organization', 'fullName'],
+        'assets' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'volume', 'kind', 'filename', 'site', 'siteId'],
+        'entries' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'slug', 'uri', 'section', 'postDate', 'site', 'siteId', 'level', 'sectionId', 'type'],
+        'users' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'group', 'groupId', 'authorOf', 'email', 'fullName', 'hasPhoto'],
     ];
+
+    /**
+     * @throws Exception
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $this->registerCustomElementType();
+    }
 
     /**
      * Handles the query execution for all element types.
@@ -72,17 +92,8 @@ class ElementQueryService
      */
     public function handleQuery(string $elementType, array $params)
     {
-        // Get the query object based on element type
-        $query = match ($elementType) {
-            'addresses' => Address::find(),
-            'assets' => Asset::find(),
-            'entries' => Entry::find(),
-            'users' => User::find(),
-            default => throw new Exception('Query for this element type is not yet implemented'),
-        };
-
+        $query = $this->elementTypeMap[$elementType]::find() ?? throw new Exception('Query for this element type is not yet implemented');
         $allowedMethods = $this->getAllowedMethods($elementType);
-
         return $this->applyParamsToQuery($query, $params, $allowedMethods);
     }
 
@@ -113,7 +124,7 @@ class ElementQueryService
             throw new Exception('Unknown element type: ' . $elementType);
         }
 
-        return array_merge($this->allowedDefaultMethods, $this->allowedMethods[$elementType]);
+        return $this->allowedMethods[$elementType];
     }
 
     public function getEagerLoadingMap(): array
@@ -127,6 +138,11 @@ class ElementQueryService
         }
 
         return array_merge(...$mapKey);
+    }
+
+    public function getCustomTransformers(): array
+    {
+        return $this->customTransformer;
     }
 
     private function _getEagerLoadingMapForField(FieldInterface $field, ?string $prefix = null, int $iteration = 0): array
@@ -159,5 +175,64 @@ class ElementQueryService
         }
 
         return $keys;
+    }
+
+    /**
+     * Register custom element types through event
+     *
+     * @throws Exception
+     */
+    private function registerCustomElementType(): void
+    {
+        if ($this->hasEventHandlers(self::EVENT_REGISTER_ELEMENT_TYPES)) {
+            $event = new RegisterElementTypesEvent();
+            $this->trigger(self::EVENT_REGISTER_ELEMENT_TYPES, $event);
+            $customElementTypes = $event->elementTypes;
+
+            $customElementTypeMap = [];
+            $customElementTypeMethodsMap = [];
+            $customElementTypeTransformersMap = [];
+
+            foreach ($customElementTypes as $customType) {
+                // Validate required properties and add them to maps
+                $this->validateCustomElementType($customType);
+
+                // Build custom query map
+                $customElementTypeMap[$customType->elementTypeHandle] = $customType->elementTypeClass;
+
+                // Build allowed methods map
+                $customElementTypeMethodsMap[$customType->elementTypeHandle] = $customType->allowedMethods;
+
+                // Add the transformer map
+                $customElementTypeTransformersMap[$customType->elementTypeClass] = $customType->transformer;
+            }
+
+            // Merge custom configurations
+            $this->elementTypeMap = $customElementTypeMap + $this->elementTypeMap;
+            $this->allowedMethods = $customElementTypeMethodsMap + $this->allowedMethods;
+            $this->customTransformer = $customElementTypeTransformersMap + $this->customTransformer;
+        }
+    }
+
+    /**
+     * Validate custom element type for proper registration
+     * @throws Exception
+     */
+    private function validateCustomElementType($customType): void
+    {
+        $requiredProperties = ['elementTypeClass', 'elementTypeHandle', 'allowedMethods', 'transformer'];
+        foreach ($requiredProperties as $property) {
+            if (!property_exists($customType, $property) || !$customType->$property) {
+                throw new Exception("Missing $property property in custom element type: " . json_encode($customType));
+            }
+        }
+
+        // Validate class and transformer existence
+        if (!class_exists($customType->elementTypeClass)) {
+            throw new Exception("Class {$customType->elementTypeClass} is not defined.");
+        }
+        if (!class_exists($customType->transformer)) {
+            throw new Exception("Transformer class {$customType->transformer} is not defined.");
+        }
     }
 }

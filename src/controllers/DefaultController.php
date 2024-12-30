@@ -49,7 +49,7 @@ class DefaultController extends Controller
         $result = $queryService->executeQuery($elementType, $params);
 
         // Instantiate the Transform Service and handle transforming different elementTypes
-        $transformerService = new JsonTransformerService();
+        $transformerService = new JsonTransformerService($queryService);
         $transformedData = $transformerService->executeTransform($result, $predefinedFieldHandleArr);
 
         $queryOne = isset($params['one']) && $params['one'] === '1';
