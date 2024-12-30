@@ -3,7 +3,7 @@
   "description": "Speeds up development in headless mode with custom fetch queries",
   "type": "craft-plugin",
   "license": "MIT",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "support": {
     "email": "samuelreichor@gmail.com",
     "issues": "https://github.com/samuelreichor/craft-query-api/issues?state=open",
