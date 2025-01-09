@@ -15,7 +15,7 @@ abstract class BaseTransformer extends Component
 {
     protected ElementInterface $element;
     public const EVENT_REGISTER_FIELD_TRANSFORMERS = 'registerTransformers';
-    private $customTransformers;
+    private array $customTransformers = [];
 
     private array $excludeFieldClasses = ['nystudio107\seomatic\fields\SeoSettings'];
 

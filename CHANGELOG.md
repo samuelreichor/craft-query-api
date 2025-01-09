@@ -37,3 +37,6 @@
 - Add `EVENT_REGISTER_ELEMENT_TYPES` for defining custom element types.
 - Add settings for cache duration and exclude Field Classes.
 - Change file and class name of `FieldTransformerEvent` to `RegisterFieldTransformersEvent`.
+
+## 1.1.4 - 2024-01-09
+- Fix missing property declaration in base transformer.
