@@ -1,5 +1,8 @@
 # Release Notes for Craft Query API
 
+## 2.0.0 - 2025-02-24
+- Fix failing query of url encoded arrays for siteIds.
+
 ## 1.1.4 - 2024-01-09
 - Fix missing property declaration in base transformer.
 
