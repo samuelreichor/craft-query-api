@@ -44,6 +44,13 @@ class DefaultController extends Controller
             unset($params['fields']);
         }
 
+        // Transform all other comma seperated strings to array
+        foreach ($params as $key => $value) {
+            if (is_string($value) && str_contains($value, ',')) {
+                $params[$key] = explode(',', $value);
+            }
+        }
+
         // Instantiate the Query Service and handle query execution
         $queryService = new ElementQueryService();
         $result = $queryService->executeQuery($elementType, $params);
