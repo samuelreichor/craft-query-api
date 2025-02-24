@@ -4,6 +4,10 @@
 ### Breaking
 - Query API respects your field limit now. Relational fields with a max relation of 1 will not return an array anymore. They will return an object now.
 
+### Added
+- Support for Color Field
+- Support for Country Field
+
 ### Bug Fixes
 - Fix failing query of url encoded arrays for siteIds.
 

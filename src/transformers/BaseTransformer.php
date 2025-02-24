@@ -147,14 +147,16 @@ abstract class BaseTransformer extends Component
         }
 
         return match ($fieldClass) {
-            'craft\fields\Assets' => $this->transformAssets($fieldValue->all()),
-            'craft\fields\Matrix' => $this->transformMatrixField($fieldValue->all()),
-            'craft\fields\Entries' => $this->transformEntries($fieldValue->all()),
-            'craft\fields\Users' => $this->transformUsers($fieldValue->all()),
-            'craft\fields\Categories' => $this->transformCategories($fieldValue->all()),
-            'craft\fields\Tags' => $this->transformTags($fieldValue->all()),
-            'craft\fields\Link' => $this->transformLinks($fieldValue),
             'craft\fields\Addresses' => $this->transformAddresses($fieldValue->all()),
+            'craft\fields\Assets' => $this->transformAssets($fieldValue->all()),
+            'craft\fields\Categories' => $this->transformCategories($fieldValue->all()),
+            'craft\fields\Color' => $this->transformColor($fieldValue),
+            'craft\fields\Country' => $this->transformCountry($fieldValue),
+            'craft\fields\Entries' => $this->transformEntries($fieldValue->all()),
+            'craft\fields\Matrix' => $this->transformMatrixField($fieldValue->all()),
+            'craft\fields\Link' => $this->transformLinks($fieldValue),
+            'craft\fields\Tags' => $this->transformTags($fieldValue->all()),
+            'craft\fields\Users' => $this->transformUsers($fieldValue->all()),
             default => $fieldValue,
         };
     }
@@ -352,6 +354,47 @@ abstract class BaseTransformer extends Component
             $transformedData[] = $userTransformer->getTransformedData();
         }
         return $transformedData;
+    }
+
+    /**
+     * Transforms a color element
+     *
+     * @param mixed $color
+     * @return array
+     */
+    protected function transformColor(mixed $color): array
+    {
+        if (empty($color)) {
+            return [];
+        }
+
+        return [
+            'hex' => $color->getHex(),
+            'rgb' => $color->getRgb(),
+            'hsl' => $color->getHsl(),
+        ];
+    }
+
+    /**
+     * Transforms a country element
+     *
+     * @param mixed $country
+     * @return array
+     */
+    protected function transformCountry(mixed $country): array
+    {
+        if (empty($country)) {
+            return [];
+        }
+
+        return [
+            'name' => $country->getName(),
+            'countryCode' => $country->getCountryCode(),
+            'threeLetterCode' => $country->getThreeLetterCode(),
+            'locale' => $country->getLocale(),
+            'currencyCode' => $country->getCurrencyCode(),
+            'timezones' => $country->getTimezones(),
+        ];
     }
 
     /**
