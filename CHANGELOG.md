@@ -1,6 +1,10 @@
 # Release Notes for Craft Query API
 
 ## 2.0.0 - 2025-02-24
+### Breaking
+- Query API respects your field limit now. Relational fields with a max relation of 1 will not return an array anymore. They will return an object now.
+
+### Bug Fixes
 - Fix failing query of url encoded arrays for siteIds.
 
 ## 1.1.4 - 2024-01-09

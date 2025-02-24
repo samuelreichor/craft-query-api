@@ -42,9 +42,9 @@ abstract class BaseTransformer extends Component
     public function getTransformedData(array $predefinedFields = []): array
     {
         $transformedFields = $this->getTransformedFields($predefinedFields);
-        $metaData = $this->getMetaData();
+        $metadata = $this->getMetaData();
 
-        return array_merge($metaData, $transformedFields);
+        return array_merge($metadata, $transformedFields);
     }
 
     /**
@@ -62,7 +62,6 @@ abstract class BaseTransformer extends Component
         $fields = $fieldLayout ? $fieldLayout->getCustomFields() : [];
         $nativeFields = $fieldLayout ? $fieldLayout->getAvailableNativeFields() : [];
         $transformedFields = [];
-
 
         // Transform native fields if they are in predefinedFields (if specified)
         foreach ($nativeFields as $nativeField) {
@@ -91,6 +90,9 @@ abstract class BaseTransformer extends Component
         foreach ($fields as $field) {
             $fieldHandle = $field->handle;
 
+            // Check if field has a limit of relations
+            $isSingleRelation = $this->isSingleRelationField($field);
+
             // Check if fieldHandle is in predefinedFields or if predefinedFields is empty
             if (!empty($predefinedFields) && !in_array($fieldHandle, $predefinedFields, true)) {
                 continue;
@@ -102,7 +104,7 @@ abstract class BaseTransformer extends Component
                 continue;
             }
 
-            $transformedFields[$fieldHandle] = $this->transformCustomField($fieldValue, $fieldClass);
+            $transformedFields[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass);
         }
 
         return $transformedFields;
@@ -214,6 +216,9 @@ abstract class BaseTransformer extends Component
 
             foreach ($block->getFieldValues() as $fieldHandle => $fieldValue) {
                 $field = $block->getFieldLayout()->getFieldByHandle($fieldHandle);
+
+                // Check if field has a limit of relations
+                $isSingleRelation = $this->isSingleRelationField($field);
                 $fieldClass = get_class($field);
 
                 // Exclude fields in matrix blocks
@@ -221,7 +226,7 @@ abstract class BaseTransformer extends Component
                     continue;
                 }
 
-                $blockData[$fieldHandle] = $this->transformCustomField($fieldValue, $fieldClass);
+                $blockData[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass);
             }
 
             $transformedData[] = $blockData;
@@ -359,5 +364,27 @@ abstract class BaseTransformer extends Component
             $this->trigger(self::EVENT_REGISTER_FIELD_TRANSFORMERS, $event);
             $this->customTransformers = $event->transformers;
         }
+    }
+
+    protected function isSingleRelationField($field): bool
+    {
+        return (property_exists($field, 'maxEntries') && $field->maxEntries == 1)
+            || (property_exists($field, 'maxRelations') && $field->maxRelations == 1)
+            || (property_exists($field, 'maxAddresses') && $field->maxAddresses == 1);
+    }
+
+    /**
+     * @throws InvalidConfigException
+     * @throws InvalidFieldException
+     * @throws ImageTransformException
+     */
+    protected function getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass)
+    {
+        if ($isSingleRelation) {
+            $transformedValue = $this->transformCustomField($fieldValue, $fieldClass);
+            return is_array($transformedValue) && !empty($transformedValue) ? $transformedValue[0] : null;
+        }
+
+        return $this->transformCustomField($fieldValue, $fieldClass);
     }
 }
