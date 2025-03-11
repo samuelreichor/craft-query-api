@@ -5,6 +5,7 @@ namespace samuelreichoer\queryapi\transformers;
 use craft\elements\Entry;
 use craft\errors\ImageTransformException;
 use craft\errors\InvalidFieldException;
+use samuelreichoer\queryapi\helpers\Utils;
 use yii\base\InvalidConfigException;
 
 class EntryTransformer extends BaseTransformer
@@ -52,11 +53,12 @@ class EntryTransformer extends BaseTransformer
             'entryType' => $this->entry->type->getHandle(),
             'sectionId' => $isEntryWithSection ? $this->entry->section->getId() : null,
             'siteId' => $this->entry->site->id,
+            'url' => $this->entry->getUrl(),
             'slug' => $this->entry->slug,
             'uri' => $this->entry->uri,
-            'cpEditUrl' => $this->entry->getCpEditUrl(),
+            'fullUri' => Utils::getFullUriFromUrl($this->entry->getUrl()),
             'status' => $this->entry->getStatus(),
-            'url' => $this->entry->getUrl(),
+            'cpEditUrl' => $this->entry->getCpEditUrl(),
         ]);
     }
 }
