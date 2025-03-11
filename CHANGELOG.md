@@ -1,5 +1,8 @@
 # Release Notes for Craft Query API
 
+## 2.0.1 - 2025-03-11
+- Add fullUri property to metadata of entry to enhance dx experience in js frameworks.
+
 ## 2.0.0 - 2025-02-24
 ### Breaking
 - Query API respects your field limit now. Relational fields with a max relation of 1 will not return an array anymore. They will return an object now.

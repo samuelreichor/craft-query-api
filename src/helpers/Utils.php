@@ -37,6 +37,23 @@ class Utils
     }
 
     /**
+     * Returns the full uri based on a given uri
+     *
+     * @param string $url
+     * @return string
+     */
+    public static function getFullUriFromUrl(string $url): string
+    {
+        $pattern = '/https?:\/\/[^\/]+(\/.*)/';
+
+        if (preg_match($pattern, $url, $matches)) {
+            return $matches[1];
+        }
+
+        return '/';
+    }
+
+    /**
      * Recursively sorts an array by its keys.
      *
      * @param array $array
