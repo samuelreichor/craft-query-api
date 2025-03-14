@@ -3,7 +3,7 @@
   "description": "Speeds up development in headless mode with a api to query data with url parameters",
   "type": "craft-plugin",
   "license": "proprietary",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "support": {
     "email": "samuelreichor@gmail.com",
     "issues": "https://github.com/samuelreichor/craft-query-api/issues?state=open",
