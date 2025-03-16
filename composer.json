@@ -1,8 +1,8 @@
 {
   "name": "samuelreichor/craft-query-api",
-  "description": "Speeds up development in headless mode with custom fetch queries",
+  "description": "Speeds up development in headless mode with a api to query data with url parameters",
   "type": "craft-plugin",
-  "license": "MIT",
+  "license": "proprietary",
   "version": "2.0.0",
   "support": {
     "email": "samuelreichor@gmail.com",
@@ -26,7 +26,7 @@
     "handle": "craft-query-api",
     "name": "Craft Query API",
     "developer": "Samuel Reichoer",
-    "documentationUrl": "https://github.com/samuelreichor/craft-query-api",
+    "documentationUrl": "https://samuelreichor.at/libraries/craft-query-api",
     "class": "samuelreichoer\\queryapi\\QueryApi"
   },
   "scripts": {

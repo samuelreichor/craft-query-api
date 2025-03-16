@@ -25,16 +25,13 @@
   </a>
 </p>
 
-
-> [!WARNING]  
-> This plugin is still in production and important features may change.
-
 ## Features
 
 - API to query addresses, assets, entries and users based on url parameters.
 - API for query all urls of every active page with template for prerendering.
-- Automatic detection of imagerx transforms.
+- Automatic detection of ImagerX transforms.
 - Automatic detection of native and custom fields on all elementTypes.
+- Events to add your own Json Transformers and Element Types. 
 
 ## Requirements
 
