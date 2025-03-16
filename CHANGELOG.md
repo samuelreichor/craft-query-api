@@ -1,5 +1,8 @@
 # Release Notes for Craft Query API
 
+## 2.0.2 - 2025-03-16
+- Change plugin name from 'Craft Query API' to 'Query API' and fix grammar in composer description.
+
 ## 2.0.1 - 2025-03-11
 - Add fullUri property to metadata of entry to enhance dx experience in js frameworks.
 
