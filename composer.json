@@ -1,6 +1,6 @@
 {
   "name": "samuelreichor/craft-query-api",
-  "description": "Speeds up development in headless mode with a api to query data with url parameters",
+  "description": "Speeds up development in headless mode with an API that allows querying data using URL parameters.",
   "type": "craft-plugin",
   "license": "proprietary",
   "version": "2.0.1",
