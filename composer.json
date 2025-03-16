@@ -24,7 +24,7 @@
   },
   "extra": {
     "handle": "craft-query-api",
-    "name": "Craft Query API",
+    "name": "Query API",
     "developer": "Samuel Reichoer",
     "documentationUrl": "https://samuelreichor.at/libraries/craft-query-api",
     "class": "samuelreichoer\\queryapi\\QueryApi"
