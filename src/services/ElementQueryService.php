@@ -22,6 +22,8 @@ class ElementQueryService extends Component
 
     public array $customTransformer = [];
 
+    public array $customElementTypes = [];
+
     private array $elementTypeMap = [
         'addresses' => Address::class,
         'assets' => Asset::class,
@@ -150,6 +152,11 @@ class ElementQueryService extends Component
         return $this->customTransformer;
     }
 
+    public function getCustomElementTypes(): array
+    {
+        return $this->customElementTypes;
+    }
+
     private function _getEagerLoadingMapForField(FieldInterface $field, ?string $prefix = null, int $iteration = 0): array
     {
         $keys = [];
@@ -202,6 +209,9 @@ class ElementQueryService extends Component
                 // Validate required properties and add them to maps
                 $this->validateCustomElementType($customType);
 
+                // Make custom element type globally available
+                $this->customElementTypes[$customType->elementTypeHandle] = $customType->elementTypeClass;
+                
                 // Build custom query map
                 $customElementTypeMap[$customType->elementTypeHandle] = $customType->elementTypeClass;
 

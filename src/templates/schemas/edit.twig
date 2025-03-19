@@ -1,6 +1,56 @@
 {% extends "_layouts/cp.twig" %}
 {% set title = "Query API Schema" %}
 
+{% set selectedSubnavItem = 'schemas' %}
+{% set fullPageForm = true %}
+{% import "_includes/forms" as forms %}
+
+{% set crumbs = [
+  { label: "Query API Schemas", url: url('query-api/schemas') }
+] %}
+
+{% set schemaComps = getSchemaComponents() %}
+{% set schema = {
+  name: 'Schema Name',
+  getErrors: '',
+} %}
+
+{% do view.registerAssetBundle("samuelreichoer\\queryapi\\resources\\QueryApiAsset") %}
+
 {% block content %}
-  <p>Edit Schema</p>
+  {{ forms.textField({
+    first: true,
+    label: "Name"|t('app'),
+    instructions: "What this schema will be called in the control panel."|t('app'),
+    id: 'name',
+    name: 'name',
+    value: schema.name,
+    autofocus: true,
+    required: true
+  }) }}
+
+  <hr>
+
+  <h2 class="choose-permission-h2">Choose the available content for querying with this schema</h2>
+  {% for catName, props in schemaComps.queries %}
+    {{ include('query-api/_components/checkboxList/checkboxList.twig', {
+      data: {
+        headline: catName,
+        permissions: props,
+      }
+    }, with_context = false) }}
+  {% endfor %}
+{% endblock %}
+
+{% block details %}
+{#  {% if schema.isPublic %}#}
+    <div class="meta">
+      {{ forms.lightswitchField({
+        label: 'Enabled'|t('app'),
+        id: 'enabled',
+        name: 'enabled',
+        on: true,
+      }) }}
+    </div>
+{#  {% endif %}#}
 {% endblock %}

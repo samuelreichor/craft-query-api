@@ -1,0 +1,44 @@
+{# >>> Comp Settings #}
+{% set compDefaults = {
+  data: {
+    name: 'c-checkboxList',
+    schema: null,
+    permissions: null,
+    id: null,
+    disabled: false,
+    headline: '',
+  },
+  classes: {
+    root: '',
+    custom: '',
+  }
+} %}
+
+{# >>> Merge data / classes / variansts (optional) #}
+{% set props = {
+  data: data is defined and data is iterable ? compDefaults.data | merge(data) : compDefaults.data,
+  classes: classes is defined and classes is iterable ? compDefaults.classes | merge(classes) : compDefaults.classes,
+} %}
+
+{% from "_includes/forms" import checkbox %}
+<div class="user-permissions">
+  <h3>{{ props.data.headline }}</h3> <button class="select-all">Select All</button>
+  <ul>
+    {% for permissionName, data in props.data.permissions %}
+      {% if props.data.schema and props.data.schema.has(permissionName) %}
+        {% set checked = true %}
+      {% else %}
+        {% set checked = false %}
+      {% endif %}
+    <li>
+      {{ checkbox({
+        label: data.label,
+        name: 'permissions[]',
+        value: permissionName,
+        checked: checked,
+        disabled: props.data.disabled
+      }) }}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
