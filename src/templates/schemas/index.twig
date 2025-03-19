@@ -1,6 +1,10 @@
 {% extends "_layouts/cp.twig" %}
 {% set title = "Query API Schemas" %}
 
+{% block actionButton %}
+  <a class="btn submit add icon" href="{{ url('query-api/schemas/new') }}">{{ "New schema"|t('app') }}</a>
+{% endblock %}
+
 {% block content %}
   <p>All Schemas</p>
 {% endblock %}

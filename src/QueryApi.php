@@ -8,6 +8,7 @@ use craft\base\Plugin;
 use craft\events\RegisterUrlRulesEvent;
 use craft\web\UrlManager;
 use samuelreichoer\queryapi\models\Settings;
+use samuelreichoer\queryapi\twigextensions\SchemaHelper;
 use yii\base\Event;
 use yii\log\FileTarget;
 
@@ -42,6 +43,7 @@ class QueryApi extends Plugin
 
         if (Craft::$app->getRequest()->getIsCpRequest()) {
             $this->_registerCpRoutes();
+            $this->_registerCpTwigExtensions();
         }
 
     }
@@ -113,5 +115,10 @@ class QueryApi extends Plugin
     private function _registerClearCaches(): void
     {
 
+    }
+
+    private function _registerCpTwigExtensions(): void
+    {
+        Craft::$app->view->registerTwigExtension(new SchemaHelper());
     }
 }
