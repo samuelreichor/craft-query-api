@@ -9,15 +9,23 @@
   { label: "Query API Schemas", url: url('query-api/schemas') }
 ] %}
 
+{% set formActions = [
+  {
+    label: 'Save and continue editing',
+    redirect: 'query-api/schemas/{id}'|hash,
+    shortcut: true,
+    retainScroll: true,
+  }
+] %}
+
 {% set schemaComps = getSchemaComponents() %}
-{% set schema = {
-  name: 'Schema Name',
-  getErrors: '',
-} %}
 
 {% do view.registerAssetBundle("samuelreichoer\\queryapi\\resources\\QueryApiAsset") %}
-
 {% block content %}
+  {{ actionInput('query-api/schema/save-schema') }}
+  {{ redirectInput('query-api/schemas') }}
+
+  {% if schema.id %}{{ hiddenInput('schemaId', schema.id) }}{% endif %}
   {{ forms.textField({
     first: true,
     label: "Name"|t('app'),
@@ -26,6 +34,7 @@
     name: 'name',
     value: schema.name,
     autofocus: true,
+    errors: schema.getErrors('name'),
     required: true
   }) }}
 
@@ -37,20 +46,12 @@
       data: {
         headline: catName,
         permissions: props,
+        schema: schema,
       }
     }, with_context = false) }}
   {% endfor %}
 {% endblock %}
 
-{% block details %}
-{#  {% if schema.isPublic %}#}
-    <div class="meta">
-      {{ forms.lightswitchField({
-        label: 'Enabled'|t('app'),
-        id: 'enabled',
-        name: 'enabled',
-        on: true,
-      }) }}
-    </div>
-{#  {% endif %}#}
-{% endblock %}
+{% js %}
+  new Craft.ElevatedSessionForm('#main-form');
+{% endjs %}

@@ -2,7 +2,6 @@
 
 namespace samuelreichoer\queryapi\resources;
 
-use Craft;
 use craft\web\AssetBundle;
 
 /**
@@ -12,9 +11,9 @@ class QueryApiAsset extends AssetBundle
 {
     public $sourcePath = __DIR__ . '/src';
     public $js = [
-        'script.js'
+        'script.js',
     ];
     public $css = [
-        'style.css'
+        'style.css',
     ];
 }
