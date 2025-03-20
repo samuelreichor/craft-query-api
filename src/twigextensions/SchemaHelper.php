@@ -2,7 +2,8 @@
 
 namespace samuelreichoer\queryapi\twigextensions;
 
-use samuelreichoer\queryapi\services\SchemaService;
+use craft\helpers\UrlHelper;
+use samuelreichoer\queryapi\QueryApi;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
@@ -16,7 +17,8 @@ class SchemaHelper extends AbstractExtension
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('getSchemaComponents', [$this, 'getSchemaComponents']),
+            new TwigFunction('getSchemaComponents', $this->getSchemaComponents(...)),
+            new TwigFunction('getAllSchemas', $this->getAllSchemas(...)),
         ];
     }
 
@@ -25,7 +27,22 @@ class SchemaHelper extends AbstractExtension
      */
     public function getSchemaComponents(): array
     {
-        $queryService = new SchemaService();
-        return $queryService->getSchemaComponents();
+        return QueryApi::getInstance()->schema->getSchemaComponents();
+    }
+
+    /**
+     * Returns all schemas
+     */
+    public function getAllSchemas(): array
+    {
+        $schemas = QueryApi::getInstance()->schema->getSchemas();
+
+        return array_map(function($schema) {
+            return [
+                'id' => $schema->id,
+                'title' => $schema->name,
+                'url' => UrlHelper::url('query-api/schemas/' . $schema->id),
+            ];
+        }, $schemas);
     }
 }

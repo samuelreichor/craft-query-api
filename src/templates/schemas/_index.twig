@@ -1,0 +1,27 @@
+{% extends "_layouts/cp.twig" %}
+{% set title = "Query API Schemas" %}
+{% set selectedSubnavItem = 'schemas' %}
+
+{% do view.registerAssetBundle('craft\\web\\assets\\admintable\\AdminTableAsset') -%}
+
+{% block actionButton %}
+  <a class="btn submit add icon" href="{{ url('query-api/schemas/new') }}">{{ "New schema"|t('app') }}</a>
+{% endblock %}
+
+{% block content %}
+  <div id="schemas-vue-admin-table"></div>
+{% endblock %}
+
+{% js %}
+  const columns = [
+  { name: '__slot:title', title: Craft.t('app', 'Name') },
+  ];
+
+  new Craft.VueAdminTable({
+  columns: columns,
+  container: '#schemas-vue-admin-table',
+  deleteAction: 'query-api/schema/delete-schema',
+  emptyMessage: 'No Query API schemas exist yet.',
+  tableData: {{ getAllSchemas()|json_encode|raw }}
+  });
+{% endjs %}
