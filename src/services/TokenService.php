@@ -5,6 +5,7 @@ namespace samuelreichoer\queryapi\services;
 use Craft;
 use craft\base\Component;
 use craft\db\Query as DbQuery;
+use craft\helpers\UrlHelper;
 use InvalidArgumentException;
 use samuelreichoer\queryapi\Constants;
 use samuelreichoer\queryapi\models\QueryApiToken;
@@ -151,6 +152,33 @@ class TokenService extends Component
         }
 
         return $tokens;
+    }
+
+    public function getSchemaUsageInTokens(int $schemaId): array
+    {
+        $rows = $this->_createTokenQuery()
+            ->where(['schemaId' => $schemaId])
+            ->all();
+
+        $usage = [];
+        foreach ($rows as $row) {
+            $token = new QueryApiToken($row);
+            $usage[] = [
+                'name' => $token->name,
+                'url' => UrlHelper::url('query-api/tokens/' . $token->id),
+            ];
+        }
+
+        return $usage;
+    }
+
+    public function getSchemaUsageInTokensAmount(int $schemaId): string
+    {
+        $amount = $this->_createTokenQuery()
+            ->where(['schemaId' => $schemaId])
+            ->count();
+
+        return $amount . " Tokens";
     }
 
     /**

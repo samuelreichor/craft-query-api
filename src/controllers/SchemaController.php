@@ -36,15 +36,18 @@ class SchemaController extends Controller
                 throw new NotFoundHttpException('Schema not found');
             }
 
-            $name = trim($schema->name) ?: Craft::t('app', 'Edit Query API Schema');
+            $title = trim($schema->name) ?: Craft::t('app', 'Edit Query API Schema');
+            $usage = QueryApi::getInstance()->token->getSchemaUsageInTokens($schema->id);
         } else {
             $schema = new QueryApiSchema();
-            $name = trim($schema->name) ?: Craft::t('app', 'Create a new Query API Schema');
+            $title = trim($schema->name) ?: Craft::t('app', 'Create a new Query API Schema');
+            $usage = [];
         }
 
         return $this->renderTemplate('query-api/schemas/_edit.twig', compact(
             'schema',
-            'name'
+            'title',
+            'usage',
         ));
     }
 

@@ -3,9 +3,11 @@
 namespace samuelreichoer\queryapi\twigextensions;
 
 use craft\helpers\UrlHelper;
+use craft\i18n\Formatter;
 use samuelreichoer\queryapi\QueryApi;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
+use yii\base\InvalidConfigException;
 
 class AuthHelper extends AbstractExtension
 {
@@ -43,6 +45,7 @@ class AuthHelper extends AbstractExtension
                 'id' => $schema->id,
                 'title' => $schema->name,
                 'url' => UrlHelper::url('query-api/schemas/' . $schema->id),
+                'usage' => QueryApi::getInstance()->token->getSchemaUsageInTokensAmount($schema->id),
             ];
         }, $schemas);
     }
@@ -51,11 +54,15 @@ class AuthHelper extends AbstractExtension
     {
         $tokens = QueryApi::getInstance()->token->getTokens();
 
-        return array_map(function($schema) {
+        return array_map(/**
+         * @throws InvalidConfigException
+         */ function($schema) {
             return [
                 'id' => $schema->id,
                 'title' => $schema->name,
                 'status' => $schema->enabled,
+                'dateCreated' => (new Formatter())->asDate($schema->dateCreated),
+                'dateUpdated' => (new Formatter())->asDate($schema->dateUpdated),
                 'url' => UrlHelper::url('query-api/tokens/' . $schema->id),
             ];
         }, $tokens);
