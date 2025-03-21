@@ -11,7 +11,8 @@ use craft\services\UserPermissions;
 use craft\web\UrlManager;
 use samuelreichoer\queryapi\models\Settings;
 use samuelreichoer\queryapi\services\SchemaService;
-use samuelreichoer\queryapi\twigextensions\SchemaHelper;
+use samuelreichoer\queryapi\services\TokenService;
+use samuelreichoer\queryapi\twigextensions\AuthHelper;
 use Throwable;
 use yii\base\Event;
 use yii\log\FileTarget;
@@ -25,6 +26,7 @@ use yii\log\FileTarget;
  * @license MIT
  *
  * @property SchemaService $schema
+ * @property TokenService $token
  */
 class QueryApi extends Plugin
 {
@@ -36,6 +38,7 @@ class QueryApi extends Plugin
         return [
             'components' => [
                 'schema' => new SchemaService(),
+                'token' => new TokenService(),
             ],
         ];
     }
@@ -112,7 +115,7 @@ class QueryApi extends Plugin
         Event::on(
             UserPermissions::class,
             UserPermissions::EVENT_REGISTER_PERMISSIONS,
-            function (RegisterUserPermissionsEvent $event) {
+            function(RegisterUserPermissionsEvent $event) {
                 $event->permissions[] = [
                     'heading' => 'Query API',
                     'permissions' => [
@@ -121,7 +124,7 @@ class QueryApi extends Plugin
                         ],
                         Constants::EDIT_TOKENS => [
                             'label' => 'Manage Tokens',
-                        ]
+                        ],
                     ],
                 ];
             }
@@ -131,7 +134,7 @@ class QueryApi extends Plugin
     private function _registerSiteRoutes(): void
     {
         Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_SITE_URL_RULES,
-            function (RegisterUrlRulesEvent $event) {
+            function(RegisterUrlRulesEvent $event) {
                 $event->rules = array_merge($event->rules, [
                     'GET /<version>/api/queryApi/customQuery' => 'query-api/default/get-custom-query-result',
                     'GET /<version>/api/queryApi/allRoutes' => 'query-api/default/get-all-routes',
@@ -142,14 +145,15 @@ class QueryApi extends Plugin
 
     private function _registerCpRoutes(): void
     {
-        Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_CP_URL_RULES, function (RegisterUrlRulesEvent $event) {
+        Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_CP_URL_RULES, function(RegisterUrlRulesEvent $event) {
             $event->rules = array_merge($event->rules, [
                 'query-api' => ['template' => 'query-api/schemas/_index.twig'],
                 'query-api/schemas' => ['template' => 'query-api/schemas/_index.twig'],
                 'query-api/schemas/new' => 'query-api/schema/edit-schema',
                 'query-api/schemas/<schemaId:\d+>' => 'query-api/schema/edit-schema',
-                'query-api/tokens/new' => ['template' => 'query-api/tokens/edit.twig'],
-                'query-api/tokens/<tokenId:\d+>' => ['template' => 'query-api/tokens/edit.twig'],
+                'query-api/tokens' => ['template' => 'query-api/tokens/_index.twig'],
+                'query-api/tokens/new' => 'query-api/token/edit-token',
+                'query-api/tokens/<tokenId:\d+>' => 'query-api/token/edit-token',
             ]);
         });
     }
@@ -160,7 +164,7 @@ class QueryApi extends Plugin
 
     private function _registerCpTwigExtensions(): void
     {
-        Craft::$app->view->registerTwigExtension(new SchemaHelper());
+        Craft::$app->view->registerTwigExtension(new AuthHelper());
     }
 
     private function _registerConfigListeners(): void
@@ -183,7 +187,7 @@ class QueryApi extends Plugin
      */
     private function _proxy(string $id, string $method): callable
     {
-        return function () use ($id, $method) {
+        return function() use ($id, $method) {
             return $this->get($id)->$method(...func_get_args());
         };
     }

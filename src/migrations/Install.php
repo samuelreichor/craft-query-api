@@ -76,7 +76,9 @@ class Install extends Migration
                 [
                     'id' => $this->primaryKey(),
                     'name' => $this->string(),
-                    'token' => $this->string(),
+                    'schemaId' => $this->string(),
+                    'accessToken' => $this->string(),
+                    'enabled' => $this->boolean(),
                     'dateCreated' => $this->dateTime()->notNull(),
                     'dateUpdated' => $this->dateTime()->notNull(),
                     'uid' => $this->uid(),

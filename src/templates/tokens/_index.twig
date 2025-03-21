@@ -1,0 +1,28 @@
+{% extends "_layouts/cp.twig" %}
+{% set title = "Query API Tokens" %}
+{% set selectedSubnavItem = 'tokens' %}
+
+{% do view.registerAssetBundle('craft\\web\\assets\\admintable\\AdminTableAsset') -%}
+
+{% block actionButton %}
+  <a class="btn submit add icon" href="{{ url('query-api/tokens/new') }}">{{ "New token"|t('app') }}</a>
+{% endblock %}
+
+{% block content %}
+  <div id="tokens-vue-admin-table"></div>
+{% endblock %}
+
+{% js %}
+  var columns = [
+  { name: '__slot:title', title: Craft.t('app', 'Name') },
+  { name: 'status', title: Craft.t('app', 'Status') },
+  ];
+
+  new Craft.VueAdminTable({
+  columns: columns,
+  container: '#tokens-vue-admin-table',
+  deleteAction: 'query-api/token/delete-token',
+  emptyMessage: Craft.t('app', 'No Query API tokens exist yet.'),
+  tableData: {{ getAllTokens()|json_encode|raw }}
+  });
+{% endjs %}
