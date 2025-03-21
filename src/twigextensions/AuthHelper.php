@@ -7,11 +7,11 @@ use samuelreichoer\queryapi\QueryApi;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
-class SchemaHelper extends AbstractExtension
+class AuthHelper extends AbstractExtension
 {
     public function getName(): string
     {
-        return 'Returns all schema components';
+        return 'Helper to get data in schema and token index pages';
     }
 
     public function getFunctions(): array
@@ -19,6 +19,7 @@ class SchemaHelper extends AbstractExtension
         return [
             new TwigFunction('getSchemaComponents', $this->getSchemaComponents(...)),
             new TwigFunction('getAllSchemas', $this->getAllSchemas(...)),
+            new TwigFunction('getAllTokens', $this->getAllTokens(...)),
         ];
     }
 
@@ -44,5 +45,19 @@ class SchemaHelper extends AbstractExtension
                 'url' => UrlHelper::url('query-api/schemas/' . $schema->id),
             ];
         }, $schemas);
+    }
+
+    public function getAllTokens(): array
+    {
+        $tokens = QueryApi::getInstance()->token->getTokens();
+
+        return array_map(function($schema) {
+            return [
+                'id' => $schema->id,
+                'title' => $schema->name,
+                'status' => $schema->enabled,
+                'url' => UrlHelper::url('query-api/tokens/' . $schema->id),
+            ];
+        }, $tokens);
     }
 }
