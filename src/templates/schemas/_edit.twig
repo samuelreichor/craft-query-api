@@ -1,5 +1,4 @@
 {% extends "_layouts/cp.twig" %}
-{% set title = "Query API Schema" %}
 
 {% set selectedSubnavItem = 'schemas' %}
 {% set fullPageForm = true %}
@@ -50,6 +49,24 @@
       }
     }, with_context = false) }}
   {% endfor %}
+{% endblock %}
+
+{% block details %}
+  {% if usage %}
+    <div class="meta read-only">
+      <div class="data">
+        <dt class="heading">Used By</dt>
+        <dd class="value">
+          <ul>
+            {% for use in usage %}
+              <a href="{{ use.url }}"> {{ use.name }}</a>
+            {% endfor %}
+          </ul>
+        </dd>
+
+      </div>
+    </div>
+  {% endif %}
 {% endblock %}
 
 {% js %}
