@@ -1,76 +1,46 @@
-function craftTranslate(category, message) {
-  if (typeof Craft !== 'undefined' && Craft.t) {
-    return Craft.t(category, message);
-  }
-  return message;
-}
-
 function initUserPermissions(wrapper) {
   const selectAllBtn = wrapper.querySelector('.select-all');
-  const allCheckboxes = wrapper.querySelectorAll('input[type="checkbox"]:not(.group-permission)');
+  const allCheckboxes = wrapper.querySelectorAll('input[type="checkbox"]');
+  const checkboxesToToggle = Array.from(allCheckboxes).filter(cb => !cb.classList.contains('select-all'));
 
-  function canSelectAll() {
-    return Array.from(allCheckboxes).some(cb => !cb.checked);
-  }
-
-  function updateSelectAllBtn() {
-    if (!selectAllBtn) return;
-    if (canSelectAll()) {
-      selectAllBtn.textContent = craftTranslate('app', 'Select All');
-    } else {
-      selectAllBtn.textContent = craftTranslate('app', 'Deselect All');
-    }
-  }
-
-  function toggleSelectAll(ev) {
-    ev.preventDefault();
-    if (canSelectAll()) {
-      Array.from(allCheckboxes)
+  function toggleSelectAll(e) {
+    if (e.target.checked) {
+      checkboxesToToggle
           .filter(cb => !cb.checked)
           .forEach(cb => cb.click());
+      selectAllBtn.checked = true;
     } else {
-      Array.from(allCheckboxes)
+      checkboxesToToggle
           .filter(cb => cb.checked)
           .forEach(cb => cb.click());
+      selectAllBtn.checked = false;
     }
   }
 
-  function toggleCheckbox(ev) {
-    const checkbox = ev.currentTarget;
+  function toggleCheckbox(e) {
+    const checkbox = e.currentTarget;
+
+    // uncheck select all btn if target checkboxes are unchecked
+    if (selectAllBtn.checked === true && checkbox.checked === false) {
+      selectAllBtn.checked = false;
+    }
     if (checkbox.disabled) {
-      ev.preventDefault();
-      return;
+      e.preventDefault();
     }
-
-    const listItem = checkbox.closest('li');
-    if (!listItem) return;
-
-    const nested = listItem.querySelectorAll(
-        ':scope > ul > li > input[type="checkbox"]:not(.group-permission)'
-    );
-
-    if (checkbox.checked) {
-      nested.forEach(childCb => childCb.disabled = false);
-    } else {
-      nested.forEach(childCb => {
-        if (childCb.checked) {
-          childCb.click();
-        }
-        childCb.disabled = true;
-      });
-    }
-
-    updateSelectAllBtn();
   }
 
   if (selectAllBtn) {
-    selectAllBtn.addEventListener('click', toggleSelectAll);
+    selectAllBtn.addEventListener('click',(e) => toggleSelectAll(e));
+
+    if (selectAllBtn.checked) {
+      checkboxesToToggle
+          .filter(cb => !cb.checked)
+          .forEach(cb => cb.click());
+    }
   }
-  allCheckboxes.forEach(checkbox => {
+  checkboxesToToggle.forEach(checkbox => {
     checkbox.addEventListener('click', toggleCheckbox);
   });
-
-  updateSelectAllBtn();
 }
 
 document.querySelectorAll('.user-permissions').forEach(wrapper => {

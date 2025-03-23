@@ -197,6 +197,10 @@ class SchemaService extends Component
         $label = Craft::t('app', 'Volumes');
         [$queries[$label], $mutations[$label]] = $this->_volumeSchemaComponents();
 
+        // Addresses
+        $label = Craft::t('app', 'Addresses');
+        [$queries[$label], $mutations[$label]] = $this->_sectionSchemaAddresses();
+
         return [
             'queries' => $queries,
             'mutations' => $mutations,
@@ -211,7 +215,10 @@ class SchemaService extends Component
     private function _siteSchemaComponents(): array
     {
         $sites = Craft::$app->getSites()->getAllSites(true);
-        $queryComponents = [];
+        $queryComponents["sites.*:read"] = [
+            'label' => Craft::t('app', 'All sites'),
+            'class' => 'select-all',
+        ];
 
         foreach ($sites as $site) {
             $queryComponents["sites.{$site->uid}:read"] = [
@@ -227,7 +234,10 @@ class SchemaService extends Component
     private function _sectionSchemaComponents(): array
     {
         $sections = Craft::$app->entries->getAllSections();
-        $queryComponents = [];
+        $queryComponents["sections.*:read"] = [
+            'label' => Craft::t('app', 'All sections'),
+            'class' => 'select-all',
+        ];
 
         foreach ($sections as $section) {
             $queryComponents["sections.{$section->uid}:read"] = [
@@ -243,7 +253,14 @@ class SchemaService extends Component
     private function _userSchemaComponents(): array
     {
         $userGroups = Craft::$app->userGroups->getAllGroups();
-        $queryComponents = [];
+        $queryComponents["usergroups.*:read"] = [
+            'label' => Craft::t('app', 'All users'),
+            'class' => 'select-all',
+        ];
+
+        $queryComponents["usergroups.admin:read"] = [
+            'label' => Craft::t('app', 'Query for “Admin” users'),
+        ];
 
         foreach ($userGroups as $userGroup) {
             $queryComponents["usergroups.{$userGroup->uid}:read"] = [
@@ -259,7 +276,10 @@ class SchemaService extends Component
     private function _volumeSchemaComponents(): array
     {
         $volumes = Craft::$app->volumes->getAllVolumes();
-        $queryComponents = [];
+        $queryComponents["volumes.*:read"] = [
+            'label' => Craft::t('app', 'All volumes'),
+            'class' => 'select-all',
+        ];
 
         foreach ($volumes as $volume) {
             $queryComponents["volumes.{$volume->uid}:read"] = [
@@ -268,6 +288,16 @@ class SchemaService extends Component
                 ]),
             ];
         }
+
+        return [$queryComponents, []];
+    }
+
+    private function _sectionSchemaAddresses(): array
+    {
+        $queryComponents["addresses.*:read"] = [
+            'label' => Craft::t('app', 'All addresses'),
+            'class' => 'select-all',
+        ];
 
         return [$queryComponents, []];
     }

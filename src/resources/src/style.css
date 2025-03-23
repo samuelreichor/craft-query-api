@@ -7,29 +7,14 @@ h2.choose-permission-h2 {
     margin-block-start: 20px !important
   }
 
-  .select-all {
-    color: var(--link-color);
-    cursor: pointer;
-    font-size: .9em;
-    margin-block: 13px;
-    margin-inline: 0
-  }
-
-  .select-all:hover {
-    text-decoration: underline
+  .select-all + label{
+    font-weight: bold;
   }
 
   div.checkbox.disabled:before,
   input.checkbox:disabled + label,
   input.checkbox:disabled + label:before {
     opacity: .5
-  }
-
-  h3:has(+.select-all) {
-    display: inline-flex;
-    border-inline-end: 1px solid #eee;
-    margin-inline-end: .3em;
-    padding-inline-end: .5em
   }
 
   ul ul li:before {

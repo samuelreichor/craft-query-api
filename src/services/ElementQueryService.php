@@ -13,8 +13,9 @@ use craft\fields\BaseRelationField;
 use craft\fields\Matrix;
 use Exception;
 use samuelreichoer\queryapi\events\RegisterElementTypesEvent;
-use samuelreichoer\queryapi\helpers\Utils;
-use samuelreichoer\queryapi\QueryApi;
+use samuelreichoer\queryapi\helpers\Permissions;
+use samuelreichoer\queryapi\models\QueryApiSchema;
+use yii\web\ForbiddenHttpException;
 
 class ElementQueryService extends Component
 {
@@ -23,6 +24,8 @@ class ElementQueryService extends Component
     public array $customTransformer = [];
 
     public array $customElementTypes = [];
+
+    private QueryApiSchema $schema;
 
     private array $elementTypeMap = [
         'addresses' => Address::class,
@@ -34,17 +37,18 @@ class ElementQueryService extends Component
     private array $allowedMethods = [
         'addresses' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'addressLine1', 'addressLine2', 'addressLine3', 'locality', 'organization', 'fullName'],
         'assets' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'volume', 'kind', 'filename', 'site', 'siteId'],
-        'entries' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'slug', 'uri', 'section', 'postDate', 'site', 'siteId', 'level', 'sectionId', 'type'],
+        'entries' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'slug', 'uri', 'section', 'sectionId', 'postDate', 'site', 'siteId', 'level', 'type'],
         'users' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'group', 'groupId', 'authorOf', 'email', 'fullName', 'hasPhoto'],
     ];
 
     /**
      * @throws Exception
      */
-    public function __construct()
+    public function __construct(QueryApiSchema $schema)
     {
         parent::__construct();
         $this->registerCustomElementType();
+        $this->schema = $schema;
     }
 
     /**
@@ -53,13 +57,10 @@ class ElementQueryService extends Component
      */
     public function executeQuery(string $elementType, array $params): array
     {
-        // Set cache duration of config and fallback to general craft cache duration
-        if (isset(QueryApi::getInstance()->getSettings()->cacheDuration)) {
-            $duration = QueryApi::getInstance()->getSettings()->cacheDuration;
-        } else {
-            $duration = Craft::$app->getConfig()->getGeneral()->cacheDuration;
-        }
+        // Throw 403 if schema does not allow elementType
+        Permissions::canQueryElement($elementType, $this->schema);
 
+        // Return cached query data
         $hashedParamsKey = Utils::generateCacheKey($params);
         $cacheKey = 'queryapi_' . $elementType . '_' . $hashedParamsKey;
 
@@ -67,9 +68,16 @@ class ElementQueryService extends Component
             return $result;
         }
 
+        // Set cache duration of config and fallback to general craft cache duration
+        if (isset(QueryApi::getInstance()->getSettings()->cacheDuration)) {
+            $duration = QueryApi::getInstance()->getSettings()->cacheDuration;
+        } else {
+            $duration = Craft::$app->getConfig()->getGeneral()->cacheDuration;
+        }
+
         Craft::$app->getElements()->startCollectingCacheInfo();
 
-        $query = $this->handleQuery($elementType, $params);
+        $query = $this->buildElementQuery($elementType, $params);
 
         $queryOne = isset($params['one']) && $params['one'] === '1';
         $queryAll = isset($params['all']) && $params['all'] === '1';
@@ -78,42 +86,50 @@ class ElementQueryService extends Component
             throw new Exception('No query was executed. This is usually because .one() or .all() is missing in the query');
         }
 
-        $eagerloadingMap = $this->getEagerLoadingMap();
-        $query->with($eagerloadingMap);
-        $queriedData = $queryOne ? [$query->one()] : $query->all();
+        $queriedDataArr = $queryOne ? [$query->one()] : $query->all();
+
+        // Don't perform permission checks if schema has access to all (*:read) elements.
+        if (!Permissions::canQueryAllElement($elementType, $this->schema)) {
+            foreach ($queriedDataArr as $queriedData) {
+                $this->_validateDataPermission($queriedData, $elementType);
+            }
+        }
 
         $cacheInfo = Craft::$app->getElements()->stopCollectingCacheInfo();
 
         Craft::$app->getCache()->set(
             $cacheKey,
-            $queriedData,
+            $queriedDataArr,
             $duration,
             $cacheInfo[0]
         );
-        return $queriedData;
+
+        return $queriedDataArr;
     }
 
     /**
-     * Handles building queries based on element type and parameters.
+     *
+     * @throws ForbiddenHttpException
      * @throws Exception
      */
-    public function handleQuery(string $elementType, array $params)
+    private function buildElementQuery(string $elementType, array $params)
     {
-        $query = $this->elementTypeMap[$elementType]::find() ?? throw new Exception('Query for this element type is not yet implemented');
         $allowedMethods = $this->getAllowedMethods($elementType);
-        return $this->applyParamsToQuery($query, $params, $allowedMethods);
-    }
+        $query = $this->elementTypeMap[$elementType]::find() ?? throw new Exception('Query for this element type is not yet implemented');
 
-    /**
-     * Apply parameters to the query based on allowed methods.
-     */
-    private function applyParamsToQuery($query, array $params, array $allowedMethods)
-    {
+        // makes sure that only entries with a section can get queried
+        if($elementType === 'entries') {
+            $query->section('*');
+        }
+
         foreach ($params as $key => $value) {
             if (in_array($key, $allowedMethods)) {
                 $query->$key($value);
             }
         }
+
+        $eagerloadingMap = $this->getEagerLoadingMap();
+        $query->with($eagerloadingMap);
 
         return $query;
     }
@@ -211,7 +227,7 @@ class ElementQueryService extends Component
 
                 // Make custom element type globally available
                 $this->customElementTypes[$customType->elementTypeHandle] = $customType->elementTypeClass;
-                
+
                 // Build custom query map
                 $customElementTypeMap[$customType->elementTypeHandle] = $customType->elementTypeClass;
 
@@ -248,6 +264,61 @@ class ElementQueryService extends Component
         }
         if (!class_exists($customType->transformer)) {
             throw new Exception("Transformer class {$customType->transformer} is not defined.");
+        }
+    }
+
+    /**
+     * @throws ForbiddenHttpException
+     */
+    private function _validateDataPermission($data, $elementType): void
+    {
+        switch ($elementType) {
+            case 'addresses':
+                if (!$this->schema->has("addresses.*:read")) {
+                    throw new ForbiddenHttpException("Schema doesn't have access to addresses");
+                }
+                break;
+
+            case 'assets':
+                $volume = $data->getVolume();
+                if (!$this->schema->has("volumes.{$volume->uid}:read")) {
+                    throw new ForbiddenHttpException("Schema doesn't have access to volume with handle: {$volume->handle}");
+                }
+                break;
+
+            case 'entries':
+                $site = $data->getSite();
+
+                if (
+                    $site &&
+                    !$this->schema->has("sites.{$site->uid}:read") &&
+                    !$this->schema->has("sites.*:read")
+                ) {
+                    throw new ForbiddenHttpException("Schema doesn't have access to site with handle: {$site->handle}");
+                }
+
+                $section = $data->getSection();
+                if ($section && !$this->schema->has("sections.{$section->uid}:read")) {
+                    throw new ForbiddenHttpException("Schema doesn't have access to section with handle: {$section->handle}");
+                }
+                break;
+
+            case 'users':
+                $userGroups = $data->getGroups();
+                $userGroups[] = (object)[
+                    'uid' => 'admin',
+                ];
+                $hasAccess = collect($userGroups)->contains(function ($group) {
+                    return $this->schema->has("usergroups.{$group->uid}:read");
+                });
+
+                if (!$hasAccess) {
+                    $groupHandles = implode(', ', array_map(fn($g) => $g->handle ?? 'admin', $userGroups));
+
+                    throw new ForbiddenHttpException("Schema doesn't have access to one of the user groups: {$groupHandles}");
+                }
+                break;
+
         }
     }
 }

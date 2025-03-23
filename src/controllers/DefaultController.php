@@ -7,9 +7,14 @@ use craft\elements\Entry;
 use craft\helpers\App;
 use craft\web\Controller;
 use Exception;
+use samuelreichoer\queryapi\helpers\Permissions;
 use samuelreichoer\queryapi\helpers\Utils;
+use samuelreichoer\queryapi\models\QueryApiSchema;
+use samuelreichoer\queryapi\QueryApi;
 use samuelreichoer\queryapi\services\ElementQueryService;
 use samuelreichoer\queryapi\services\JsonTransformerService;
+use yii\web\BadRequestHttpException;
+use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 
 class DefaultController extends Controller
@@ -22,7 +27,18 @@ class DefaultController extends Controller
     public function actionGetCustomQueryResult(): Response
     {
         // Get request parameters
-        $request = Craft::$app->getRequest();
+        $request = $this->request;
+
+        $schema = $this->_getActiveSchema();
+        Permissions::canQuerySites($schema);
+
+        if ($request->getIsOptions()) {
+            // This is just a preflight request, no need to run the actual query yet
+            $this->response->format = Response::FORMAT_RAW;
+            $this->response->data = '';
+            return $this->response;
+        }
+
         $params = $request->getQueryParams();
 
         // Early return when no params are available. Min is one()/all()
@@ -52,7 +68,7 @@ class DefaultController extends Controller
         }
 
         // Instantiate the Query Service and handle query execution
-        $queryService = new ElementQueryService();
+        $queryService = new ElementQueryService($schema);
         $result = $queryService->executeQuery($elementType, $params);
 
         // Instantiate the Transform Service and handle transforming different elementTypes
@@ -127,5 +143,25 @@ class DefaultController extends Controller
         );
 
         return $this->asJson($allUrls);
+    }
+
+    /**
+     * @throws BadRequestHttpException
+     */
+    private function _getActiveSchema(): QueryApiSchema
+    {
+        $bearerToken = $this->request->getBearerToken();
+
+        if (!$bearerToken) {
+            throw new BadRequestHttpException('Missing Authorization header.');
+        }
+
+        $token = QueryApi::getInstance()->token->getTokenByAccessToken($bearerToken);
+
+        if (!$token->getIsValid()) {
+            throw new BadRequestHttpException('Invalid or inactive access token.');
+        }
+
+        return $token->getSchema();
     }
 }

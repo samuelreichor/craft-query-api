@@ -22,7 +22,7 @@
 
 {% from "_includes/forms" import checkbox %}
 <div class="user-permissions">
-  <h3>{{ props.data.headline }}</h3> <button class="select-all">Select All</button>
+  <h3>{{ props.data.headline }}</h3>
   <ul>
     {% for permissionName, data in props.data.permissions %}
       {% if props.data.schema and props.data.schema.has(permissionName) %}
@@ -36,7 +36,8 @@
         name: 'permissions[]',
         value: permissionName,
         checked: checked,
-        disabled: props.data.disabled
+        disabled: props.data.disabled,
+        class: data.class ?? '',
       }) }}
     </li>
     {% endfor %}
