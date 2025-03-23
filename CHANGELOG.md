@@ -1,5 +1,24 @@
 # Release Notes for Craft Query API
 
+## 3.0.0 – 2025-03-23
+
+### Breaking
+- Added bearer token logic, including schemas and tokens. A bearer token is now required to query data.
+- Changed plugin handle from `craft-query-api` to `query-api`.
+
+### Added
+- Control Panel section for schemas.
+- Control Panel section for tokens.
+- Permission logic based on schema scope.
+- Clear "Query API data cache" option in `/admin/utilities/clear-caches`.
+- CLI commands to create a public schema and token.
+- Support for admin() parameter in user queries.
+
+### Improved
+- The `getFullUriFromUrl` utility no longer throws an error when querying entries without a section.
+- Now the ready-to-rock JSON output is cached instead of the raw database query result.
+- API error responses are more accurate now.
+
 ## 2.0.2 - 2025-03-16
 - Change plugin name from 'Craft Query API' to 'Query API' and fix grammar in composer description.
 
