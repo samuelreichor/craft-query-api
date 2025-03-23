@@ -182,6 +182,14 @@ class TokenService extends Component
     }
 
     /**
+     * @throws \yii\base\Exception
+     */
+    public function generateToken()
+    {
+        return Craft::$app->getSecurity()->generateRandomString(32);
+    }
+
+    /**
      * Returns a DbCommand object prepped for retrieving tokens.
      *
      * @return DbQuery
