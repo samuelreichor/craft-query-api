@@ -158,6 +158,21 @@ class SchemaService extends Component
     }
 
     /**
+     * Get a schema by its name.
+     *
+     * @param string $name The schema's name
+     * @return QueryApiSchema|null
+     */
+    public function getSchemaByName(string $name): ?QueryApiSchema
+    {
+        $result = $this->_createSchemaQuery()
+            ->where(['name' => $name])
+            ->one();
+
+        return $result ? new QueryApiSchema($result) : null;
+    }
+
+    /**
      * Get all schemas.
      *
      * @return QueryApiSchema[]

@@ -45,7 +45,7 @@ class TokenController extends Controller
             $title = trim($token->name) ?: Craft::t('app', 'Edit Query API Token');
         } else {
             $token = new QueryApiToken();
-            $accessToken = $this->_generateToken();
+            $accessToken = $tokenService->generateToken();
             $title = trim($token->name) ?: Craft::t('app', 'Create a new Query API token');
         }
 
@@ -180,16 +180,7 @@ class TokenController extends Controller
         $this->requireAcceptsJson();
 
         return $this->asJson([
-            'accessToken' => $this->_generateToken(),
+            'accessToken' => QueryAPI::getInstance()->token->generateToken(),
         ]);
-    }
-
-    /**
-     * @return string
-     * @throws Exception
-     */
-    private function _generateToken(): string
-    {
-        return Craft::$app->getSecurity()->generateRandomString(32);
     }
 }
