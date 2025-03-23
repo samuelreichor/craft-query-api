@@ -25,6 +25,7 @@
   {{ redirectInput('query-api/schemas') }}
 
   {% if schema.id %}{{ hiddenInput('schemaId', schema.id) }}{% endif %}
+
   {{ forms.textField({
     first: true,
     label: "Name"|t('app'),
