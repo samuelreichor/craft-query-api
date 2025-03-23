@@ -39,11 +39,15 @@ class Utils
     /**
      * Returns the full uri based on a given uri
      *
-     * @param string $url
-     * @return string
+     * @param string|null $url
+     * @return string|null
      */
-    public static function getFullUriFromUrl(string $url): string
+    public static function getFullUriFromUrl(?string $url): string|null
     {
+        if (!$url) {
+            return null;
+        }
+
         $pattern = '/https?:\/\/[^\/]+(\/.*)/';
 
         if (preg_match($pattern, $url, $matches)) {

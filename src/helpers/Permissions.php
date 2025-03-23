@@ -52,6 +52,11 @@ class Permissions
         return true;
     }
 
+    public static function canQueryAllEntries(QueryApiSchema $schema): bool
+    {
+        return $schema->has('sections.*:read');
+    }
+
     /**
      * @throws ForbiddenHttpException
      */
@@ -61,7 +66,6 @@ class Permissions
 
         if (!isset($allowedEntities['usergroups'])) {
             throw new ForbiddenHttpException('Schema doesn’t have access to any user group');
-
         }
         return true;
     }

@@ -60,23 +60,6 @@ class ElementQueryService extends Component
         // Throw 403 if schema does not allow elementType
         Permissions::canQueryElement($elementType, $this->schema);
 
-        // Return cached query data
-        $hashedParamsKey = Utils::generateCacheKey($params);
-        $cacheKey = 'queryapi_' . $elementType . '_' . $hashedParamsKey;
-
-        if ($result = Craft::$app->getCache()->get($cacheKey)) {
-            return $result;
-        }
-
-        // Set cache duration of config and fallback to general craft cache duration
-        if (isset(QueryApi::getInstance()->getSettings()->cacheDuration)) {
-            $duration = QueryApi::getInstance()->getSettings()->cacheDuration;
-        } else {
-            $duration = Craft::$app->getConfig()->getGeneral()->cacheDuration;
-        }
-
-        Craft::$app->getElements()->startCollectingCacheInfo();
-
         $query = $this->buildElementQuery($elementType, $params);
 
         $queryOne = isset($params['one']) && $params['one'] === '1';
@@ -94,15 +77,6 @@ class ElementQueryService extends Component
                 $this->_validateDataPermission($queriedData, $elementType);
             }
         }
-
-        $cacheInfo = Craft::$app->getElements()->stopCollectingCacheInfo();
-
-        Craft::$app->getCache()->set(
-            $cacheKey,
-            $queriedDataArr,
-            $duration,
-            $cacheInfo[0]
-        );
 
         return $queriedDataArr;
     }
@@ -308,7 +282,7 @@ class ElementQueryService extends Component
                 $userGroups[] = (object)[
                     'uid' => 'admin',
                 ];
-                $hasAccess = collect($userGroups)->contains(function ($group) {
+                $hasAccess = collect($userGroups)->contains(function($group) {
                     return $this->schema->has("usergroups.{$group->uid}:read");
                 });
 

@@ -4,15 +4,16 @@ namespace samuelreichoer\queryapi\controllers;
 
 use Craft;
 use craft\elements\Entry;
-use craft\helpers\App;
 use craft\web\Controller;
 use Exception;
+use samuelreichoer\queryapi\Constants;
 use samuelreichoer\queryapi\helpers\Permissions;
 use samuelreichoer\queryapi\helpers\Utils;
 use samuelreichoer\queryapi\models\QueryApiSchema;
 use samuelreichoer\queryapi\QueryApi;
 use samuelreichoer\queryapi\services\ElementQueryService;
 use samuelreichoer\queryapi\services\JsonTransformerService;
+use yii\caching\TagDependency;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\Response;
@@ -67,6 +68,21 @@ class DefaultController extends Controller
             }
         }
 
+        // Return cached query data
+        $cacheKey = Constants::CACHE_TAG_GlOBAL . $elementType . '_' . Utils::generateCacheKey([
+                'schema' => $schema->uid,
+                'params' => $params,
+            ]);
+
+        if ($result = Craft::$app->getCache()->get($cacheKey)) {
+            return $result;
+        }
+
+        // Set cache duration of config and fallback to general craft cache duration
+        $duration = QueryApi::getInstance()->cache->getCacheDuration();
+
+        Craft::$app->getElements()->startCollectingCacheInfo();
+
         // Instantiate the Query Service and handle query execution
         $queryService = new ElementQueryService($schema);
         $result = $queryService->executeQuery($elementType, $params);
@@ -76,10 +92,22 @@ class DefaultController extends Controller
         $transformedData = $transformerService->executeTransform($result, $predefinedFieldHandleArr);
 
         $queryOne = isset($params['one']) && $params['one'] === '1';
-        if ($queryOne) {
-            return $this->asJson($transformedData[0]);
-        }
-        return $this->asJson($transformedData);
+        $finalResult = $this->asJson($queryOne ? ($transformedData[0] ?? null) : $transformedData);
+
+        [$craftDependency] = Craft::$app->getElements()->stopCollectingCacheInfo();
+
+        $tags = $craftDependency instanceof TagDependency ? $craftDependency->tags : [];
+        $tags[] = Constants::CACHE_TAG_GlOBAL;
+        $combinedDependency = new TagDependency(['tags' => $tags]);
+
+        Craft::$app->getCache()->set(
+            $cacheKey,
+            $finalResult,
+            $duration,
+            $combinedDependency
+        );
+
+        return $finalResult;
     }
 
     /**
@@ -87,41 +115,49 @@ class DefaultController extends Controller
      */
     public function actionGetAllRoutes($siteId = null): Response
     {
-        $allSiteIds = Craft::$app->sites->getAllSiteIds();
-        if ($siteId === null) {
-            $siteIds = $allSiteIds;
-        } else {
-            // decode url needed when using decoded arrays
-            $decodedSiteId = urldecode($siteId);
+        $schema = $this->_getActiveSchema();
+        Permissions::canQuerySites($schema);
 
-            // if it is a json array “[1,2]“
-            $siteIds = json_decode($decodedSiteId, true);
+        if ($this->request->getIsOptions()) {
+            // This is just a preflight request, no need to run the actual query yet
+            $this->response->format = Response::FORMAT_RAW;
+            $this->response->data = '';
+            return $this->response;
+        }
 
-            // If json decode is not working, it is a primitive type
-            if (!is_array($siteIds)) {
-                $siteIds = [$siteId];
-            }
+        $siteIds = $this->_getValidSiteIds($siteId);
 
-            // Check if Site Ids are valid
-            foreach ($siteIds as $id) {
-                if (!in_array($id, $allSiteIds)) {
-                    throw new Exception('Invalid SiteId: ' . $id);
+        $cacheKey = Constants::CACHE_TAG_GlOBAL . 'get-all-routes_' . Utils::generateCacheKey([
+            'schema' => $schema->uid,
+            'siteIds' => $siteIds,
+        ]);
+
+        if ($result = Craft::$app->getCache()->get($cacheKey)) {
+            return $result;
+        }
+
+        if (!Permissions::canQueryAllSites($schema)) {
+            foreach ($siteIds as $siteId) {
+                $site = Craft::$app->getSites()->getSiteById($siteId);
+                if (!$schema->has("sites.{$site->uid}:read")) {
+                    throw new ForbiddenHttpException("Schema doesn't have access to site with handle: {$site->handle}");
                 }
             }
         }
 
-        $craftDuration = Craft::$app->getConfig()->getGeneral()->cacheDuration;
-        $duration = App::env('CRAFT_ENVIRONMENT') === 'dev' ? 0 : $craftDuration;
-        $hashedParamsKey = Utils::generateCacheKey($siteIds);
-        $cacheKey = 'queryapi_' . 'getAllRoutes' . '_' . $hashedParamsKey;
-
-        if ($result = Craft::$app->getCache()->get($cacheKey)) {
-            return $this->asJson($result);
+        $allSectionIds = Craft::$app->entries->getAllSectionIds();
+        if (!Permissions::canQueryAllEntries($schema)) {
+            foreach ($allSectionIds as $sectionId) {
+                $section = Craft::$app->getEntries()->getSectionById($sectionId);
+                if (!$schema->has("sections.{$section->uid}:read")) {
+                    throw new ForbiddenHttpException("Schema doesn't have access to section with handle: {$section->handle}");
+                }
+            }
         }
 
+        $duration = QueryApi::getInstance()->cache->getCacheDuration();
         Craft::$app->getElements()->startCollectingCacheInfo();
 
-        $allSectionIds = Craft::$app->entries->getAllSectionIds();
         $allUrls = [];
         $allEntries = Entry::find()
             ->siteId($siteIds)
@@ -133,16 +169,21 @@ class DefaultController extends Controller
             $allUrls[] = $entry->getUrl();
         }
 
-        $cacheInfo = Craft::$app->getElements()->stopCollectingCacheInfo();
+        $finalResult = $this->asJson($allUrls);
+
+        [$craftDependency] = Craft::$app->getElements()->stopCollectingCacheInfo();
+        $tags = $craftDependency instanceof TagDependency ? $craftDependency->tags : [];
+        $tags[] = Constants::CACHE_TAG_GlOBAL;
+        $combinedDependency = new TagDependency(['tags' => $tags]);
 
         Craft::$app->getCache()->set(
             $cacheKey,
-            $allUrls,
+            $finalResult,
             $duration,
-            $cacheInfo[0]
+            $combinedDependency
         );
 
-        return $this->asJson($allUrls);
+        return $finalResult;
     }
 
     /**
@@ -163,5 +204,36 @@ class DefaultController extends Controller
         }
 
         return $token->getSchema();
+    }
+
+    /**
+     * @throws BadRequestHttpException
+     */
+    private function _getValidSiteIds(?string $rawSiteIds)
+    {
+        $allSiteIds = Craft::$app->sites->getAllSiteIds();
+        if ($rawSiteIds === null) {
+            return $allSiteIds;
+        }
+
+        // decode url needed when using decoded arrays
+        $decodedSiteId = urldecode($rawSiteIds);
+
+        // if it is a json array “[1,2]“
+        $siteIds = json_decode($decodedSiteId, true);
+
+        // If json decode is not working, it is a primitive type
+        if (!is_array($siteIds)) {
+            $siteIds = [$rawSiteIds];
+        }
+
+        // Check if Site Ids are valid
+        foreach ($siteIds as $id) {
+            if (!in_array($id, $allSiteIds)) {
+                throw new BadRequestHttpException('Invalid SiteId: ' . $id);
+            }
+        }
+
+        return $siteIds;
     }
 }

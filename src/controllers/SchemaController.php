@@ -91,6 +91,9 @@ class SchemaController extends Controller
             return null;
         }
 
+        // Invalidate query API caches
+        QueryApi::getInstance()->cache->invalidateCaches();
+
         $this->setSuccessFlash(Craft::t('app', 'Schema saved.'));
         return $this->redirectToPostedUrl($schema);
     }
