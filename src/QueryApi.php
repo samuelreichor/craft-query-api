@@ -5,11 +5,14 @@ namespace samuelreichoer\queryapi;
 use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
+use craft\events\RegisterCacheOptionsEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
 use craft\services\UserPermissions;
+use craft\utilities\ClearCaches;
 use craft\web\UrlManager;
 use samuelreichoer\queryapi\models\Settings;
+use samuelreichoer\queryapi\services\CacheService;
 use samuelreichoer\queryapi\services\SchemaService;
 use samuelreichoer\queryapi\services\TokenService;
 use samuelreichoer\queryapi\twigextensions\AuthHelper;
@@ -27,11 +30,17 @@ use yii\log\FileTarget;
  *
  * @property SchemaService $schema
  * @property TokenService $token
+ * @property CacheService $cache
  */
 class QueryApi extends Plugin
 {
     public string $schemaVersion = '1.0.0';
     public bool $hasCpSection = true;
+
+    /**
+     * @var ?QueryApi
+     */
+    public static ?QueryApi $plugin;
 
     public static function config(): array
     {
@@ -39,6 +48,7 @@ class QueryApi extends Plugin
             'components' => [
                 'schema' => new SchemaService(),
                 'token' => new TokenService(),
+                'cache' => new CacheService(),
             ],
         ];
     }
@@ -46,9 +56,11 @@ class QueryApi extends Plugin
     public function init(): void
     {
         parent::init();
+        self::$plugin = $this;
 
         $this->_initLogger();
         $this->_registerConfigListeners();
+        $this->_registerClearCaches();
 
         if (Craft::$app->getRequest()->getIsCpRequest()) {
             $this->_registerCpRoutes();
@@ -160,6 +172,13 @@ class QueryApi extends Plugin
 
     private function _registerClearCaches(): void
     {
+        Event::on(ClearCaches::class, ClearCaches::EVENT_REGISTER_CACHE_OPTIONS, function(RegisterCacheOptionsEvent $event) {
+            $event->options[] = [
+                'key' => 'query-api',
+                'label' => Craft::t('query-api', 'Query API data cache'),
+                'action' => [self::$plugin->cache, 'invalidateCaches'],
+            ];
+        });
     }
 
     private function _registerCpTwigExtensions(): void

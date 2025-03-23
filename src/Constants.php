@@ -10,9 +10,11 @@ class Constants
 
     // Project Config
     public const PATH_SCHEMAS = 'query-api.schemas';
-    public const PATH_TOKENS = 'query-api.tokens';
 
     // Permissions
     public const EDIT_SCHEMAS = 'query-api-schemas:edit';
     public const EDIT_TOKENS = 'query-api-tokens:edit';
+
+    // Cache Identifier
+    public const CACHE_TAG_GlOBAL = 'queryapi:global';
 }
