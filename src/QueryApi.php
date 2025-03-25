@@ -148,9 +148,9 @@ class QueryApi extends Plugin
         Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_SITE_URL_RULES,
             function(RegisterUrlRulesEvent $event) {
                 $event->rules = array_merge($event->rules, [
-                    'GET /<version>/api/queryApi/customQuery' => 'query-api/default/get-custom-query-result',
-                    'GET /<version>/api/queryApi/allRoutes' => 'query-api/default/get-all-routes',
-                    'GET /<version>/api/queryApi/allRoutes/<siteId>' => 'query-api/default/get-all-routes',
+                    '/<version>/api/queryApi/customQuery' => 'query-api/default/get-custom-query-result',
+                    '/<version>/api/queryApi/allRoutes' => 'query-api/default/get-all-routes',
+                    '/<version>/api/queryApi/allRoutes/<siteId>' => 'query-api/default/get-all-routes',
                 ]);
             });
     }
