@@ -4,6 +4,7 @@ namespace samuelreichoer\queryapi\controllers;
 
 use Craft;
 use craft\elements\Entry;
+use craft\helpers\ArrayHelper;
 use craft\web\Controller;
 use Exception;
 use samuelreichoer\queryapi\Constants;
@@ -27,11 +28,8 @@ class DefaultController extends Controller
      */
     public function actionGetCustomQueryResult(): Response
     {
-        // Get request parameters
+        $this->_setCorsHeaders();
         $request = $this->request;
-
-        $schema = $this->_getActiveSchema();
-        Permissions::canQuerySites($schema);
 
         if ($request->getIsOptions()) {
             // This is just a preflight request, no need to run the actual query yet
@@ -39,6 +37,10 @@ class DefaultController extends Controller
             $this->response->data = '';
             return $this->response;
         }
+
+        $schema = $this->_getActiveSchema();
+        Permissions::canQuerySites($schema);
+
 
         $params = $request->getQueryParams();
 
@@ -115,15 +117,18 @@ class DefaultController extends Controller
      */
     public function actionGetAllRoutes($siteId = null): Response
     {
-        $schema = $this->_getActiveSchema();
-        Permissions::canQuerySites($schema);
+        $this->_setCorsHeaders();
+        $request = $this->request;
 
-        if ($this->request->getIsOptions()) {
+        if ($request->getIsOptions()) {
             // This is just a preflight request, no need to run the actual query yet
             $this->response->format = Response::FORMAT_RAW;
             $this->response->data = '';
             return $this->response;
         }
+
+        $schema = $this->_getActiveSchema();
+        Permissions::canQuerySites($schema);
 
         $siteIds = $this->_getValidSiteIds($siteId);
 
@@ -184,6 +189,29 @@ class DefaultController extends Controller
         );
 
         return $finalResult;
+    }
+
+    private function _setCorsHeaders(): void
+    {
+        $headers = $this->response->getHeaders();
+        $headers->setDefault('Access-Control-Allow-Credentials', 'true');
+        $headers->setDefault('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Craft-Authorization, X-Craft-Token');
+
+        $corsFilter = Craft::$app->getBehavior('corsFilter');
+        $allowedOrigins = $corsFilter->cors['Origin'] ?? [];
+        if (is_array($allowedOrigins)) {
+            if (($origins = $this->request->getOrigin()) !== null) {
+                $origins = ArrayHelper::filterEmptyStringsFromArray(array_map('trim', explode(',', $origins)));
+                foreach ($origins as $origin) {
+                    if (in_array($origin, $allowedOrigins)) {
+                        $headers->setDefault('Access-Control-Allow-Origin', $origin);
+                        break;
+                    }
+                }
+            }
+        } else {
+            $headers->setDefault('Access-Control-Allow-Origin', '*');
+        }
     }
 
     /**
