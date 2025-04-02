@@ -117,7 +117,7 @@ class Permissions
     {
         $checkPermissions = [
             'assets' => fn($schema) => $schema->has('volumes.*:read'),
-            'entries' => fn($schema) => $schema->has('sections.*:read'),
+            'entries' => fn($schema) => $schema->has('sections.*:read') && $schema->has('sites.*:read'),
             'users' => fn($schema) => $schema->has('usergroups.*:read'),
             'addresses' => fn($schema) => $schema->has('addresses.*:read'),
         ];

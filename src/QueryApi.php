@@ -80,9 +80,9 @@ class QueryApi extends Plugin
     {
         $item = parent::getCpNavItem();
         $subNavs = [];
-
+        $isAllowedAdminChanges = Craft::$app->getConfig()->getGeneral()->allowAdminChanges;
         $currentUser = Craft::$app->getUser()->getIdentity();
-        if ($currentUser->can(Constants::EDIT_SCHEMAS)) {
+        if ($currentUser->can(Constants::EDIT_SCHEMAS) && $isAllowedAdminChanges) {
             $subNavs['schemas'] = [
                 'label' => 'Schemas',
                 'url' => 'query-api/schemas',
@@ -98,6 +98,12 @@ class QueryApi extends Plugin
 
         if (empty($subNavs)) {
             return null;
+        }
+
+        if (count($subNavs) <= 1) {
+            return array_merge($item, [
+                'subnav' => [],
+            ]);
         }
 
         return array_merge($item, [
@@ -158,15 +164,28 @@ class QueryApi extends Plugin
     private function _registerCpRoutes(): void
     {
         Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_CP_URL_RULES, function(RegisterUrlRulesEvent $event) {
-            $event->rules = array_merge($event->rules, [
-                'query-api' => ['template' => 'query-api/schemas/_index.twig'],
-                'query-api/schemas' => ['template' => 'query-api/schemas/_index.twig'],
-                'query-api/schemas/new' => 'query-api/schema/edit-schema',
-                'query-api/schemas/<schemaId:\d+>' => 'query-api/schema/edit-schema',
-                'query-api/tokens' => ['template' => 'query-api/tokens/_index.twig'],
-                'query-api/tokens/new' => 'query-api/token/edit-token',
-                'query-api/tokens/<tokenId:\d+>' => 'query-api/token/edit-token',
-            ]);
+            $urlRules = [];
+
+            $isAllowedAdminChanges = Craft::$app->getConfig()->getGeneral()->allowAdminChanges;
+            $currentUser = Craft::$app->getUser()->getIdentity();
+            if ($currentUser->can(Constants::EDIT_SCHEMAS) && $isAllowedAdminChanges) {
+                $urlRules['query-api'] = ['template' => 'query-api/schemas/_index.twig'];
+                $urlRules['query-api/schemas'] = ['template' => 'query-api/schemas/_index.twig'];
+                $urlRules['query-api/schemas/new'] = 'query-api/schema/edit-schema';
+                $urlRules['query-api/schemas/<schemaId:\d+>'] = 'query-api/schema/edit-schema';
+            }
+
+            if ($currentUser->can(Constants::EDIT_TOKENS)) {
+                $urlRules['query-api/tokens'] = ['template' => 'query-api/tokens/_index.twig'];
+                $urlRules['query-api/tokens/new'] = 'query-api/token/edit-token';
+                $urlRules['query-api/tokens/<tokenId:\d+>'] = 'query-api/token/edit-token';
+
+                if (!$isAllowedAdminChanges) {
+                    $urlRules['query-api'] = ['template' => 'query-api/tokens/_index.twig'];
+                }
+            }
+
+            $event->rules = array_merge($event->rules, $urlRules);
         });
     }
 
