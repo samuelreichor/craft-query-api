@@ -13,6 +13,7 @@ use craft\utilities\ClearCaches;
 use craft\web\UrlManager;
 use samuelreichoer\queryapi\models\Settings;
 use samuelreichoer\queryapi\services\CacheService;
+use samuelreichoer\queryapi\services\ElementQueryService;
 use samuelreichoer\queryapi\services\SchemaService;
 use samuelreichoer\queryapi\services\TokenService;
 use samuelreichoer\queryapi\twigextensions\AuthHelper;
@@ -31,6 +32,7 @@ use yii\log\FileTarget;
  * @property SchemaService $schema
  * @property TokenService $token
  * @property CacheService $cache
+ * @property ElementQueryService $query
  */
 class QueryApi extends Plugin
 {
@@ -49,6 +51,7 @@ class QueryApi extends Plugin
                 'schema' => new SchemaService(),
                 'token' => new TokenService(),
                 'cache' => new CacheService(),
+                'query' => new ElementQueryService(),
             ],
         ];
     }

@@ -11,6 +11,7 @@ use craft\helpers\StringHelper;
 use Exception;
 use samuelreichoer\queryapi\Constants;
 use samuelreichoer\queryapi\models\QueryApiSchema;
+use samuelreichoer\queryapi\QueryApi;
 use yii\db\Expression;
 
 class SchemaService extends Component
@@ -216,6 +217,14 @@ class SchemaService extends Component
         $label = Craft::t('app', 'Addresses');
         [$queries[$label], $mutations[$label]] = $this->_sectionSchemaAddresses();
 
+        // Cusom Elements
+        list($customQueries, $customMutations) = $this->_sectionSchemaOther();
+        if (!empty($customQueries)) {
+            $label = Craft::t('app', 'Custom Element Types');
+            $queries[$label] = $customQueries;
+            $mutations[$label] = $customMutations;
+        }
+
         return [
             'queries' => $queries,
             'mutations' => $mutations,
@@ -314,6 +323,21 @@ class SchemaService extends Component
             'class' => 'select-all',
         ];
 
+        return [$queryComponents, []];
+    }
+
+    private function _sectionSchemaOther(): array
+    {
+        $customElementTypes = QueryApi::getInstance()->query->getCustomElementTypes();
+
+        $queryComponents = [];
+        foreach ($customElementTypes as $customElementType) {
+            $queryComponents[$customElementType->elementTypeHandle . ":read"] = [
+                'label' => Craft::t('app', 'Query for all elements of type “{handle}”', [
+                    'handle' => $customElementType->elementTypeHandle,
+                ]),
+            ];
+        }
         return [$queryComponents, []];
     }
 
