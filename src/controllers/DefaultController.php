@@ -41,7 +41,6 @@ class DefaultController extends Controller
         $schema = $this->_getActiveSchema();
         Permissions::canQuerySites($schema);
 
-
         $params = $request->getQueryParams();
 
         // Early return when no params are available. Min is one()/all()
@@ -86,8 +85,8 @@ class DefaultController extends Controller
         Craft::$app->getElements()->startCollectingCacheInfo();
 
         // Instantiate the Query Service and handle query execution
-        $queryService = new ElementQueryService($schema);
-        $result = $queryService->executeQuery($elementType, $params);
+        $queryService = new ElementQueryService();
+        $result = $queryService->executeQuery($elementType, $params, $schema);
 
         // Instantiate the Transform Service and handle transforming different elementTypes
         $transformerService = new JsonTransformerService($queryService);

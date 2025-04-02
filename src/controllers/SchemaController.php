@@ -26,6 +26,10 @@ class SchemaController extends Controller
     public function actionEditSchema(?int $schemaId = null, ?QueryApiSchema $schema = null): Response
     {
         $this->requirePermission(Constants::EDIT_SCHEMAS);
+        $general = Craft::$app->getConfig()->getGeneral();
+        if (!$general->allowAdminChanges) {
+            throw new ForbiddenHttpException('Unable to edit Query API schemas because admin changes are disabled in this environment.');
+        }
 
         if ($schema || $schemaId) {
             if (!$schema) {

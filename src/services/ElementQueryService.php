@@ -44,19 +44,19 @@ class ElementQueryService extends Component
     /**
      * @throws Exception
      */
-    public function __construct(QueryApiSchema $schema)
+    public function __construct()
     {
         parent::__construct();
         $this->registerCustomElementType();
-        $this->schema = $schema;
     }
 
     /**
      * Handles the query execution for all element types.
      * @throws Exception
      */
-    public function executeQuery(string $elementType, array $params): array
+    public function executeQuery(string $elementType, array $params, QueryApiSchema $schema): array
     {
+        $this->schema = $schema;
         // Throw 403 if schema does not allow elementType
         Permissions::canQueryElement($elementType, $this->schema);
 
