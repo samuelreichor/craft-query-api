@@ -200,7 +200,7 @@ class ElementQueryService extends Component
                 $this->validateCustomElementType($customType);
 
                 // Make custom element type globally available
-                $this->customElementTypes[$customType->elementTypeHandle] = $customType->elementTypeClass;
+                $this->customElementTypes[$customType->elementTypeHandle] = $customType;
 
                 // Build custom query map
                 $customElementTypeMap[$customType->elementTypeHandle] = $customType->elementTypeClass;

@@ -110,7 +110,12 @@ class Permissions
 
         if (isset($checkPermissions[$elementType])) {
             $checkPermissions[$elementType]($schema);
+        } else {
+            if (!self::canQueryCustomElement($elementType, $schema)) {
+                throw new ForbiddenHttpException('Schema doesn’t have access to element with handle: ' . $elementType);
+            }
         }
+
     }
 
     public static function canQueryAllElement(string $elementType, QueryApiSchema $schema): bool
@@ -126,6 +131,11 @@ class Permissions
             return $checkPermissions[$elementType]($schema);
         }
 
-        return false;
+        return self::canQueryCustomElement($elementType, $schema);
+    }
+
+    public static function canQueryCustomElement(string $elementType, QueryApiSchema $schema): bool
+    {
+        return $schema->has($elementType . ':read');
     }
 }
