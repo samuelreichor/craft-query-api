@@ -11,6 +11,7 @@ use samuelreichoer\queryapi\Constants;
 use samuelreichoer\queryapi\models\QueryApiToken;
 use samuelreichoer\queryapi\records\TokenRecord;
 use yii\db\Exception;
+use yii\web\UnauthorizedHttpException;
 
 class TokenService extends Component
 {
@@ -125,7 +126,7 @@ class TokenService extends Component
      *
      * @param string $token
      * @return QueryApiToken
-     * @throws InvalidArgumentException if $token is invalid
+     * @throws UnauthorizedHttpException
      */
     public function getTokenByAccessToken(string $token): QueryApiToken
     {
@@ -134,7 +135,7 @@ class TokenService extends Component
             ->one();
 
         if (!$result) {
-            throw new InvalidArgumentException('Invalid access token');
+            throw new UnauthorizedHttpException('Invalid access token, please provide valid token.');
         }
 
         return new QueryApiToken($result);
@@ -184,7 +185,7 @@ class TokenService extends Component
     /**
      * @throws \yii\base\Exception
      */
-    public function generateToken()
+    public function generateToken(): string
     {
         return Craft::$app->getSecurity()->generateRandomString(32);
     }

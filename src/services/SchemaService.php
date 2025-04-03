@@ -278,7 +278,7 @@ class SchemaService extends Component
     {
         $userGroups = Craft::$app->userGroups->getAllGroups();
         $queryComponents["usergroups.*:read"] = [
-            'label' => Craft::t('app', 'All users'),
+            'label' => Craft::t('app', 'All user groups'),
             'class' => 'select-all',
         ];
 

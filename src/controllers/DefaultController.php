@@ -18,6 +18,7 @@ use yii\caching\TagDependency;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\Response;
+use yii\web\UnauthorizedHttpException;
 
 class DefaultController extends Controller
 {
@@ -46,6 +47,13 @@ class DefaultController extends Controller
         // Early return when no params are available. Min is one()/all()
         if (count($params) < 1) {
             return $this->asJson([]);
+        }
+
+        $queryOne = isset($params['one']) && $params['one'] === '1';
+        $queryAll = isset($params['all']) && $params['all'] === '1';
+
+        if (!$queryAll && !$queryOne) {
+            throw new BadRequestHttpException('No query was executed. This is usually because .one() or .all() is missing in the query');
         }
 
         // Get the elementType of the query
@@ -92,7 +100,6 @@ class DefaultController extends Controller
         $transformerService = new JsonTransformerService($queryService);
         $transformedData = $transformerService->executeTransform($result, $predefinedFieldHandleArr);
 
-        $queryOne = isset($params['one']) && $params['one'] === '1';
         $finalResult = $this->asJson($queryOne ? ($transformedData[0] ?? null) : $transformedData);
 
         [$craftDependency] = Craft::$app->getElements()->stopCollectingCacheInfo();
@@ -215,6 +222,7 @@ class DefaultController extends Controller
 
     /**
      * @throws BadRequestHttpException
+     * @throws UnauthorizedHttpException
      */
     private function _getActiveSchema(): QueryApiSchema
     {
@@ -227,7 +235,7 @@ class DefaultController extends Controller
         $token = QueryApi::getInstance()->token->getTokenByAccessToken($bearerToken);
 
         if (!$token->getIsValid()) {
-            throw new BadRequestHttpException('Invalid or inactive access token.');
+            throw new UnauthorizedHttpException('Invalid or inactive access token.');
         }
 
         return $token->getSchema();
