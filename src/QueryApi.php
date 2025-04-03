@@ -171,19 +171,28 @@ class QueryApi extends Plugin
 
             $isAllowedAdminChanges = Craft::$app->getConfig()->getGeneral()->allowAdminChanges;
             $currentUser = Craft::$app->getUser()->getIdentity();
-            if ($currentUser->can(Constants::EDIT_SCHEMAS) && $isAllowedAdminChanges) {
+
+            // Cp request but no valid sessionId.
+            if (!$currentUser) {
+                return;
+            }
+
+            $canEditSchemas = $currentUser->can(Constants::EDIT_SCHEMAS) && $isAllowedAdminChanges;
+            $canEditTokens = $currentUser->can(Constants::EDIT_TOKENS);
+
+            if ($canEditSchemas) {
                 $urlRules['query-api'] = ['template' => 'query-api/schemas/_index.twig'];
                 $urlRules['query-api/schemas'] = ['template' => 'query-api/schemas/_index.twig'];
                 $urlRules['query-api/schemas/new'] = 'query-api/schema/edit-schema';
                 $urlRules['query-api/schemas/<schemaId:\d+>'] = 'query-api/schema/edit-schema';
             }
 
-            if ($currentUser->can(Constants::EDIT_TOKENS)) {
+            if ($canEditTokens) {
                 $urlRules['query-api/tokens'] = ['template' => 'query-api/tokens/_index.twig'];
                 $urlRules['query-api/tokens/new'] = 'query-api/token/edit-token';
                 $urlRules['query-api/tokens/<tokenId:\d+>'] = 'query-api/token/edit-token';
 
-                if (!$isAllowedAdminChanges) {
+                if (!$canEditSchemas) {
                     $urlRules['query-api'] = ['template' => 'query-api/tokens/_index.twig'];
                 }
             }

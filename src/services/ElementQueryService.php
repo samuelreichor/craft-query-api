@@ -15,6 +15,7 @@ use Exception;
 use samuelreichoer\queryapi\events\RegisterElementTypesEvent;
 use samuelreichoer\queryapi\helpers\Permissions;
 use samuelreichoer\queryapi\models\QueryApiSchema;
+use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 
 class ElementQueryService extends Component
@@ -52,29 +53,29 @@ class ElementQueryService extends Component
 
     /**
      * Handles the query execution for all element types.
-     * @throws Exception
+     * @throws BadRequestHttpException|ForbiddenHttpException
      */
     public function executeQuery(string $elementType, array $params, QueryApiSchema $schema): array
     {
+        // Throw 400 if elementType is not defined
+        if (!isset($this->elementTypeMap[$elementType])) {
+            throw new BadRequestHttpException("No matching element type found for type: " . $elementType);
+        }
+
         $this->schema = $schema;
         // Throw 403 if schema does not allow elementType
         Permissions::canQueryElement($elementType, $this->schema);
 
         $query = $this->buildElementQuery($elementType, $params);
-
         $queryOne = isset($params['one']) && $params['one'] === '1';
-        $queryAll = isset($params['all']) && $params['all'] === '1';
-
-        if (!$queryAll && !$queryOne) {
-            throw new Exception('No query was executed. This is usually because .one() or .all() is missing in the query');
-        }
-
         $queriedDataArr = $queryOne ? [$query->one()] : $query->all();
 
-        // Don't perform permission checks if schema has access to all (*:read) elements.
+        // Don't perform permission checks if schema has access to all (*:read) elements or is an empty arr.
         if (!Permissions::canQueryAllElement($elementType, $this->schema)) {
             foreach ($queriedDataArr as $queriedData) {
-                $this->_validateDataPermission($queriedData, $elementType);
+                if ($queriedData) {
+                    $this->_validateDataPermission($queriedData, $elementType);
+                }
             }
         }
 
@@ -89,10 +90,10 @@ class ElementQueryService extends Component
     private function buildElementQuery(string $elementType, array $params)
     {
         $allowedMethods = $this->getAllowedMethods($elementType);
-        $query = $this->elementTypeMap[$elementType]::find() ?? throw new Exception('Query for this element type is not yet implemented');
+        $query = $this->elementTypeMap[$elementType]::find();
 
         // makes sure that only entries with a section can get queried
-        if($elementType === 'entries') {
+        if ($elementType === 'entries') {
             $query->section('*');
         }
 
@@ -279,9 +280,12 @@ class ElementQueryService extends Component
 
             case 'users':
                 $userGroups = $data->getGroups();
-                $userGroups[] = (object)[
-                    'uid' => 'admin',
-                ];
+
+                if ($data->admin) {
+                    $userGroups[] = (object)[
+                        'uid' => 'admin',
+                    ];
+                }
                 $hasAccess = collect($userGroups)->contains(function($group) {
                     return $this->schema->has("usergroups.{$group->uid}:read");
                 });

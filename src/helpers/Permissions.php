@@ -115,7 +115,6 @@ class Permissions
                 throw new ForbiddenHttpException('Schema doesn’t have access to element with handle: ' . $elementType);
             }
         }
-
     }
 
     public static function canQueryAllElement(string $elementType, QueryApiSchema $schema): bool
