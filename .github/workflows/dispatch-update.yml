@@ -1,0 +1,17 @@
+name: Dispatch Update Submodule
+on:
+  push:
+    branches:
+      - '**'
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Dispatch update to Query API Showcase Project
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PAT }}
+          repository: samuelreichor/query-api-showcase
+          event-type: update-submodule
