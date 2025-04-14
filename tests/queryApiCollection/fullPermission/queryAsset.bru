@@ -1,0 +1,29 @@
+meta {
+  name: Query Asset
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}?elementType=assets&one=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  elementType: assets
+  one: 1
+}
+
+auth:bearer {
+  token: {{publicBearToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const helper = require('./tests');
+  helper.isValidAssetResp()
+}

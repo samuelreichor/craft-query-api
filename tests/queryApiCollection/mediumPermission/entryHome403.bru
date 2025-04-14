@@ -1,0 +1,25 @@
+meta {
+  name: Entry Home (403)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}?elementType=entries&section=home&one=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  elementType: entries
+  section: home
+  one: 1
+}
+
+auth:bearer {
+  token: {{mediumBearToken}}
+}
+
+assert {
+  res.status: eq 403
+}

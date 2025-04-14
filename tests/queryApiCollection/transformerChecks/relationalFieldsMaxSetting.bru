@@ -1,0 +1,27 @@
+meta {
+  name: Relational Fields Max Setting
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}?elementType=entries&section=fieldCheck&id=60&one=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  elementType: entries
+  section: fieldCheck
+  id: 60
+  one: 1
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const helper = require('./tests');
+  helper.isValidMaxFieldSettingStructure()
+}

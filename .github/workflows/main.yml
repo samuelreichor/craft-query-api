@@ -43,3 +43,15 @@ jobs:
         run: composer install --no-interaction --no-ansi --no-progress
 
       - run: ${{ matrix.actions.run }}
+  deploy_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Bruno CLI
+        run: npm install -g @usebruno/cli
+
+      - name: Run API Tests
+        run: bru run --env stage
+        working-directory: tests/queryApiCollection

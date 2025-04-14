@@ -1,0 +1,29 @@
+meta {
+  name: Query All Custom Elements
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}?elementType=navigation&all=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  elementType: navigation
+  all: 1
+}
+
+auth:bearer {
+  token: {{publicBearToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const helper = require('./tests');
+  helper.isValidNavNodeResp(true)
+}

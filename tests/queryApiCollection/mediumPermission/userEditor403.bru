@@ -1,0 +1,26 @@
+meta {
+  name: User Editor (403)
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}?elementType=users&group=editor&all=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  elementType: users
+  group: editor
+  all: 1
+  ~admin: 1
+}
+
+auth:bearer {
+  token: {{mediumBearToken}}
+}
+
+assert {
+  res.status: eq 403
+}

@@ -1,0 +1,15 @@
+meta {
+  name: No token (400)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 400
+}

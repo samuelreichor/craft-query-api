@@ -1,0 +1,29 @@
+meta {
+  name: Query All Users
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}?elementType=users&all=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  elementType: users
+  all: 1
+}
+
+auth:bearer {
+  token: {{publicBearToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const helper = require('./tests');
+  helper.isValidUserResp(true)
+}

@@ -1,0 +1,24 @@
+meta {
+  name: Query Custom Element
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}?elementType=users&one=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  elementType: users
+  one: 1
+}
+
+auth:bearer {
+  token: {{privateBearToken}}
+}
+
+assert {
+  res.status: eq 403
+}

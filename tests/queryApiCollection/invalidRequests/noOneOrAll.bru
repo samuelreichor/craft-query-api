@@ -1,0 +1,23 @@
+meta {
+  name: No one() or all() (400)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}?elementType=entries
+  body: none
+  auth: bearer
+}
+
+params:query {
+  elementType: entries
+}
+
+auth:bearer {
+  token: {{publicBearToken}}
+}
+
+assert {
+  res.status: eq 400
+}

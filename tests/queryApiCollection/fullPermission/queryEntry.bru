@@ -1,0 +1,30 @@
+meta {
+  name: Query Entry
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}?elementType=entries&section=home&one=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  elementType: entries
+  section: home
+  one: 1
+}
+
+auth:bearer {
+  token: {{publicBearToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const helper = require('./tests');
+  helper.isValidEntryResp()
+}
