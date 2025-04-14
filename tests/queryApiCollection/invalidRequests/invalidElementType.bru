@@ -1,0 +1,24 @@
+meta {
+  name: Invalid Entry Type (400)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}?elementType=wrong&one=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  elementType: wrong
+  one: 1
+}
+
+auth:bearer {
+  token: {{publicBearToken}}
+}
+
+assert {
+  res.status: eq 400
+}

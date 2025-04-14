@@ -1,0 +1,29 @@
+meta {
+  name: Query All Addresses
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}?elementType=addresses&all=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  elementType: addresses
+  all: 1
+}
+
+auth:bearer {
+  token: {{publicBearToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const helper = require('./tests');
+  helper.isValidAddressResp(true)
+}

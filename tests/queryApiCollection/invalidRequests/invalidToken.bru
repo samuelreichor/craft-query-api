@@ -1,0 +1,19 @@
+meta {
+  name: Invalid token (401)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: invalid-token
+}
+
+assert {
+  res.status: eq 401
+}

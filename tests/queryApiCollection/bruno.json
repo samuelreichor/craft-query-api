@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "name": "queryApiCollection",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ],
+  "scripts": {
+    "filesystemAccess": {
+      "allow": true
+    }
+  }
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Entry Blog Site EN (200)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}?elementType=entries&section=blog&site=en&one=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  elementType: entries
+  section: blog
+  site: en
+  one: 1
+}
+
+auth:bearer {
+  token: {{mediumBearToken}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const helper = require('./tests');
+  helper.isValidEntryResp()
+}

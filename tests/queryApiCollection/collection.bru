@@ -1,0 +1,13 @@
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{publicBearToken}}
+}
+
+tests {
+  test("should be valid json", function () {
+    expect(res.headers.get('Content-Type')).to.contain('application/json')
+  })
+}

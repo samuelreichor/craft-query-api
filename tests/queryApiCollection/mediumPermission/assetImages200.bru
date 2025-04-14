@@ -1,0 +1,25 @@
+meta {
+  name: Asset Images (200)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}?elementType=assets&volume=images&one=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  elementType: assets
+  volume: images
+  one: 1
+}
+
+auth:bearer {
+  token: {{mediumBearToken}}
+}
+
+assert {
+  res.status: eq 200
+}

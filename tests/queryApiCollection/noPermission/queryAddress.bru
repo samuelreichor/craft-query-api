@@ -1,0 +1,24 @@
+meta {
+  name: Query Address
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}?elementType=addresses&one=1
+  body: none
+  auth: bearer
+}
+
+params:query {
+  elementType: addresses
+  one: 1
+}
+
+auth:bearer {
+  token: {{privateBearToken}}
+}
+
+assert {
+  res.status: eq 403
+}
