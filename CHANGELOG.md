@@ -1,6 +1,6 @@
 # Release Notes for Craft Query API
 
-## 3.0.0 – 2025-03-23
+## 3.0.0 - 2025-03-23
 
 ### Breaking
 - Added bearer token logic, including schemas and tokens. A bearer token is now required to query data.
