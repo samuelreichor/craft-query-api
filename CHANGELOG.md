@@ -1,5 +1,9 @@
 # Release Notes for Craft Query API
 
+## 3.0.1 - 2025-04-30
+- Fix permission error in allRoutes api endpoint and add tests for this endpoint.
+- Change some namings of allRoutes logic to enhance readability.
+
 ## 3.0.0 - 2025-03-23
 
 ### Breaking

@@ -159,7 +159,7 @@ class QueryApi extends Plugin
                 $event->rules = array_merge($event->rules, [
                     '/<version>/api/queryApi/customQuery' => 'query-api/default/get-custom-query-result',
                     '/<version>/api/queryApi/allRoutes' => 'query-api/default/get-all-routes',
-                    '/<version>/api/queryApi/allRoutes/<siteId>' => 'query-api/default/get-all-routes',
+                    '/<version>/api/queryApi/allRoutes/<siteIds>' => 'query-api/default/get-all-routes',
                 ]);
             });
     }

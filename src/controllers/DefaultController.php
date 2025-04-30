@@ -121,7 +121,7 @@ class DefaultController extends Controller
     /**
      * @throws Exception
      */
-    public function actionGetAllRoutes($siteId = null): Response
+    public function actionGetAllRoutes($siteIds = null): Response
     {
         $this->_setCorsHeaders();
         $request = $this->request;
@@ -136,11 +136,11 @@ class DefaultController extends Controller
         $schema = $this->_getActiveSchema();
         Permissions::canQuerySites($schema);
 
-        $siteIds = $this->_getValidSiteIds($siteId);
+        $validSiteIds = $this->_getValidSiteIds($siteIds);
 
         $cacheKey = Constants::CACHE_TAG_GlOBAL . 'get-all-routes_' . Utils::generateCacheKey([
             'schema' => $schema->uid,
-            'siteIds' => $siteIds,
+            'siteIds' => $validSiteIds,
         ]);
 
         if ($result = Craft::$app->getCache()->get($cacheKey)) {
@@ -148,7 +148,7 @@ class DefaultController extends Controller
         }
 
         if (!Permissions::canQueryAllSites($schema)) {
-            foreach ($siteIds as $siteId) {
+            foreach ($validSiteIds as $siteId) {
                 $site = Craft::$app->getSites()->getSiteById($siteId);
                 if (!$schema->has("sites.{$site->uid}:read")) {
                     throw new ForbiddenHttpException("Schema doesn't have access to site with handle: {$site->handle}");
@@ -157,21 +157,13 @@ class DefaultController extends Controller
         }
 
         $allSectionIds = Craft::$app->entries->getAllSectionIds();
-        if (!Permissions::canQueryAllEntries($schema)) {
-            foreach ($allSectionIds as $sectionId) {
-                $section = Craft::$app->getEntries()->getSectionById($sectionId);
-                if (!$schema->has("sections.{$section->uid}:read")) {
-                    throw new ForbiddenHttpException("Schema doesn't have access to section with handle: {$section->handle}");
-                }
-            }
-        }
 
         $duration = QueryApi::getInstance()->cache->getCacheDuration();
         Craft::$app->getElements()->startCollectingCacheInfo();
 
         $allUrls = [];
         $allEntries = Entry::find()
-            ->siteId($siteIds)
+            ->siteId($validSiteIds)
             ->status('live')
             ->sectionId($allSectionIds)
             ->all();
