@@ -1,0 +1,20 @@
+meta {
+  name: All Sites (200)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrlAllRoutes}}
+  body: none
+  auth: inherit
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const helper = require('./tests');
+  helper.isValidAllRoutesResp()
+}

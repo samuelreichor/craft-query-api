@@ -1,0 +1,19 @@
+meta {
+  name: All Sites (403)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrlAllRoutes}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{mediumBearToken}}
+}
+
+assert {
+  res.status: eq 403
+}
