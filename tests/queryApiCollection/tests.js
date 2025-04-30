@@ -146,6 +146,16 @@ function isValidMaxFieldSettingStructure() {
   assertAllRelationalFieldsAreObjects(resp);
 }
 
+function isValidAllRoutesResp() {
+  const resp = res.getBody();
+  test("Response of allRoutes endpoint is valid", function () {
+      expect(Array.isArray(resp)).to.be.true;
+      resp.forEach(url => {
+        expect(url).to.be.a('string').that.does.include('http');
+      })
+  });
+}
+
 module.exports = {
   isValidDataResp,
   isValidNestedDataResp,
@@ -156,4 +166,5 @@ module.exports = {
   isValidNavNodeResp,
   isValidAllDefaultFieldsResp,
   isValidMaxFieldSettingStructure,
+  isValidAllRoutesResp,
 }

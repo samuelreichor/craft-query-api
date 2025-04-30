@@ -1,0 +1,23 @@
+meta {
+  name: Site Id [1, 2] (403)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrlAllRoutes}}?siteIds=%5B1%2C2%5D
+  body: none
+  auth: bearer
+}
+
+params:query {
+  siteIds: [1,2]
+}
+
+auth:bearer {
+  token: {{mediumBearToken}}
+}
+
+assert {
+  res.status: eq 403
+}
