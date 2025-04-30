@@ -336,7 +336,16 @@ abstract class BaseTransformer extends Component
 
         return [
             'elementType' => $link->type,
-            'value' => $link->value,
+            'url' => $link->url,
+            'label' => $link->label,
+            'target' => $link->target ?? '_self',
+            'rel' => $link->rel,
+            'urlSuffix' => $link->urlSuffix,
+            'class' => $link->class,
+            'id' => $link->id,
+            'ariaLabel' => $link->ariaLabel,
+            'download' => $link->download,
+            'downloadFile' => $link->filename,
         ];
     }
 
@@ -350,8 +359,8 @@ abstract class BaseTransformer extends Component
     {
         $transformedData = [];
         foreach ($addresses as $address) {
-            $userTransformer = new AddressTransformer($address);
-            $transformedData[] = $userTransformer->getTransformedData();
+            $addressTransformer = new AddressTransformer($address);
+            $transformedData[] = $addressTransformer->getTransformedData();
         }
         return $transformedData;
     }

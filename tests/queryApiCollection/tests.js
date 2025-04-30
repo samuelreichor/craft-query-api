@@ -125,7 +125,7 @@ function isValidAllDefaultFieldsResp(isArr = false) {
     iconField: [[], false, 'string'],
     json: [['id'], false],
     lightswitch: [[], false, 'boolean'],
-    linkField: [['elementType', 'value'], false],
+    linkField: [['elementType', 'url'], false],
     matrix: [['type', 'title', 'headlineTag'], true],
     money: [['amount', 'currency'], false],
     multiSelect: [reqKeys.option, true],
