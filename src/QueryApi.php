@@ -16,6 +16,7 @@ use samuelreichoer\queryapi\services\CacheService;
 use samuelreichoer\queryapi\services\ElementQueryService;
 use samuelreichoer\queryapi\services\SchemaService;
 use samuelreichoer\queryapi\services\TokenService;
+use samuelreichoer\queryapi\services\TypescriptService;
 use samuelreichoer\queryapi\twigextensions\AuthHelper;
 use Throwable;
 use yii\base\Event;
@@ -33,6 +34,7 @@ use yii\log\FileTarget;
  * @property TokenService $token
  * @property CacheService $cache
  * @property ElementQueryService $query
+ * @property TypescriptService $typescript
  */
 class QueryApi extends Plugin
 {
@@ -52,6 +54,7 @@ class QueryApi extends Plugin
                 'token' => new TokenService(),
                 'cache' => new CacheService(),
                 'query' => new ElementQueryService(),
+                'typescript' => new TypescriptService(),
             ],
         ];
     }
