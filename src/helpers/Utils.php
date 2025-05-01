@@ -3,6 +3,7 @@
 namespace samuelreichoer\queryapi\helpers;
 
 use Craft;
+use craft\fieldlayoutelements\users\PhotoField;
 
 class Utils
 {
@@ -55,6 +56,14 @@ class Utils
         }
 
         return '/';
+    }
+
+    public static function isSingleRelationField($field): bool
+    {
+        return (property_exists($field, 'maxEntries') && $field->maxEntries == 1)
+            || (property_exists($field, 'maxRelations') && $field->maxRelations == 1)
+            || (property_exists($field, 'maxAddresses') && $field->maxAddresses == 1)
+            || (get_class($field) === PhotoField::class);
     }
 
     /**

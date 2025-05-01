@@ -114,7 +114,6 @@ class QueryApi extends Plugin
         ]);
     }
 
-
     protected function createSettingsModel(): ?Model
     {
         return new Settings();

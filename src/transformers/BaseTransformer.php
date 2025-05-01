@@ -7,7 +7,21 @@ use craft\base\Component;
 use craft\base\ElementInterface;
 use craft\errors\ImageTransformException;
 use craft\errors\InvalidFieldException;
+use craft\fieldlayoutelements\BaseField;
+use craft\fieldlayoutelements\CustomField;
+use craft\fields\Addresses;
+use craft\fields\Assets;
+use craft\fields\Categories;
+use craft\fields\Color;
+use craft\fields\Country;
+use craft\fields\Entries;
+use craft\fields\Link;
+use craft\fields\Matrix;
+use craft\fields\Tags;
+use craft\fields\Users;
+use samuelreichoer\queryapi\Constants;
 use samuelreichoer\queryapi\events\RegisterFieldTransformersEvent;
+use samuelreichoer\queryapi\helpers\Utils;
 use samuelreichoer\queryapi\QueryApi;
 use yii\base\InvalidConfigException;
 
@@ -17,17 +31,14 @@ abstract class BaseTransformer extends Component
     public const EVENT_REGISTER_FIELD_TRANSFORMERS = 'registerTransformers';
     private array $customTransformers = [];
 
-    private array $excludeFieldClasses = ['nystudio107\seomatic\fields\SeoSettings'];
+    private array $excludeFieldClasses;
 
     public function __construct(ElementInterface $element)
     {
         parent::__construct();
         $this->element = $element;
         $this->registerCustomTransformers();
-
-        if (isset(QueryApi::getInstance()->getSettings()->excludeFieldClasses)) {
-            $this->excludeFieldClasses = array_merge($this->excludeFieldClasses, QueryApi::getInstance()->getSettings()->excludeFieldClasses);
-        }
+        $this->excludeFieldClasses = $this->getExcludedFieldClasses();
     }
 
     /**
@@ -59,13 +70,19 @@ abstract class BaseTransformer extends Component
     protected function getTransformedFields(array $predefinedFields = []): array
     {
         $fieldLayout = $this->element->getFieldLayout();
-        $fields = $fieldLayout ? $fieldLayout->getCustomFields() : [];
-        $nativeFields = $fieldLayout ? $fieldLayout->getAvailableNativeFields() : [];
+        $fieldElements = array_merge($fieldLayout->getElementsByType(BaseField::class), $fieldLayout->getElementsByType(CustomField::class));
         $transformedFields = [];
 
-        // Transform native fields if they are in predefinedFields (if specified)
-        foreach ($nativeFields as $nativeField) {
-            $fieldHandle = $nativeField->attribute ?? '';
+        foreach ($fieldElements as $field) {
+            $fieldClass = get_class($field);
+
+            // only custom fields have the getField() method
+            if (method_exists($field, 'getField')) {
+                $field = $field->getField();
+                $fieldClass = get_class($field);
+            }
+
+            $fieldHandle = $field->handle ?? $field->attribute ?? '';
 
             if ($fieldHandle === '') {
                 continue;
@@ -76,35 +93,19 @@ abstract class BaseTransformer extends Component
                 continue;
             }
 
-            $fieldValue = $this->element->$fieldHandle;
-            $fieldClass = get_class($nativeField);
-
             if (in_array($fieldClass, $this->excludeFieldClasses, true)) {
                 continue;
             }
 
-            $transformedFields[$fieldHandle] = $this->transformNativeField($fieldValue, $fieldClass);
-        }
-
-        // Transform custom fields if they are in predefinedFields (if specified)
-        foreach ($fields as $field) {
-            $fieldHandle = $field->handle;
-
-            // Check if field has a limit of relations
-            $isSingleRelation = $this->isSingleRelationField($field);
-
-            // Check if fieldHandle is in predefinedFields or if predefinedFields is empty
-            if (!empty($predefinedFields) && !in_array($fieldHandle, $predefinedFields, true)) {
-                continue;
+            $isSingleRelation = Utils::isSingleRelationField($field);
+            try {
+                $fieldValue = $this->element->getFieldValue($fieldHandle);
+                $transformedFields[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass);
+            } catch (InvalidFieldException) {
+                // handle native fields
+                $fieldValue = $this->element->$fieldHandle;
+                $transformedFields[$fieldHandle] = $this->transformNativeField($fieldValue, $fieldClass);
             }
-
-            $fieldValue = $this->element->getFieldValue($fieldHandle);
-            $fieldClass = get_class($field);
-            if (in_array($fieldClass, $this->excludeFieldClasses, true)) {
-                continue;
-            }
-
-            $transformedFields[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass);
         }
 
         return $transformedFields;
@@ -147,16 +148,16 @@ abstract class BaseTransformer extends Component
         }
 
         return match ($fieldClass) {
-            'craft\fields\Addresses' => $this->transformAddresses($fieldValue->all()),
-            'craft\fields\Assets' => $this->transformAssets($fieldValue->all()),
-            'craft\fields\Categories' => $this->transformCategories($fieldValue->all()),
-            'craft\fields\Color' => $this->transformColor($fieldValue),
-            'craft\fields\Country' => $this->transformCountry($fieldValue),
-            'craft\fields\Entries' => $this->transformEntries($fieldValue->all()),
-            'craft\fields\Matrix' => $this->transformMatrixField($fieldValue->all()),
-            'craft\fields\Link' => $this->transformLinks($fieldValue),
-            'craft\fields\Tags' => $this->transformTags($fieldValue->all()),
-            'craft\fields\Users' => $this->transformUsers($fieldValue->all()),
+            Addresses::class => $this->transformAddresses($fieldValue->all()),
+            Assets::class => $this->transformAssets($fieldValue->all()),
+            Categories::class => $this->transformCategories($fieldValue->all()),
+            Color::class => $this->transformColor($fieldValue),
+            Country::class => $this->transformCountry($fieldValue),
+            Entries::class => $this->transformEntries($fieldValue->all()),
+            Matrix::class => $this->transformMatrixField($fieldValue->all()),
+            Link::class => $this->transformLinks($fieldValue),
+            Tags::class => $this->transformTags($fieldValue->all()),
+            Users::class => $this->transformUsers($fieldValue->all()),
             default => $fieldValue,
         };
     }
@@ -220,7 +221,7 @@ abstract class BaseTransformer extends Component
                 $field = $block->getFieldLayout()->getFieldByHandle($fieldHandle);
 
                 // Check if field has a limit of relations
-                $isSingleRelation = $this->isSingleRelationField($field);
+                $isSingleRelation = Utils::isSingleRelationField($field);
                 $fieldClass = get_class($field);
 
                 // Exclude fields in matrix blocks
@@ -418,13 +419,6 @@ abstract class BaseTransformer extends Component
         }
     }
 
-    protected function isSingleRelationField($field): bool
-    {
-        return (property_exists($field, 'maxEntries') && $field->maxEntries == 1)
-            || (property_exists($field, 'maxRelations') && $field->maxRelations == 1)
-            || (property_exists($field, 'maxAddresses') && $field->maxAddresses == 1);
-    }
-
     /**
      * @throws InvalidConfigException
      * @throws InvalidFieldException
@@ -438,5 +432,14 @@ abstract class BaseTransformer extends Component
         }
 
         return $this->transformCustomField($fieldValue, $fieldClass);
+    }
+
+    protected function getExcludedFieldClasses(): array
+    {
+        if (isset(QueryApi::getInstance()->getSettings()->excludeFieldClasses)) {
+            return array_merge(Constants::EXCLUDED_FIELD_HANDLES, QueryApi::getInstance()->getSettings()->excludeFieldClasses);
+        }
+
+        return Constants::EXCLUDED_FIELD_HANDLES;
     }
 }

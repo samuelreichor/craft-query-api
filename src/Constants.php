@@ -17,4 +17,7 @@ class Constants
 
     // Cache Identifier
     public const CACHE_TAG_GlOBAL = 'queryapi:global';
+
+    // Base Transformer Settings
+    public const EXCLUDED_FIELD_HANDLES = ['nystudio107\seomatic\fields\SeoSettings'];
 }
