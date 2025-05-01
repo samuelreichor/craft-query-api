@@ -4,6 +4,12 @@ namespace samuelreichoer\queryapi\helpers;
 
 use Craft;
 use craft\fieldlayoutelements\users\PhotoField;
+use craft\fields\ButtonGroup;
+use craft\fields\Checkboxes;
+use craft\fields\Dropdown;
+use craft\fields\MultiSelect;
+use craft\fields\RadioButtons;
+use craft\fields\Table;
 
 class Utils
 {
@@ -60,10 +66,37 @@ class Utils
 
     public static function isSingleRelationField($field): bool
     {
-        return (property_exists($field, 'maxEntries') && $field->maxEntries == 1)
-            || (property_exists($field, 'maxRelations') && $field->maxRelations == 1)
-            || (property_exists($field, 'maxAddresses') && $field->maxAddresses == 1)
+        return (property_exists($field, 'maxEntries') && $field->maxEntries === 1)
+            || (property_exists($field, 'maxRelations') && $field->maxRelations === 1)
+            || (property_exists($field, 'maxAddresses') && $field->maxAddresses === 1)
             || (get_class($field) === PhotoField::class);
+    }
+
+    public static function isArrayField($field): bool
+    {
+        return (property_exists($field, 'maxEntries') && $field->maxEntries !== 1)
+            || (property_exists($field, 'maxRelations') && $field->maxRelations !== 1)
+            || (property_exists($field, 'maxAddresses') && $field->maxAddresses !== 1)
+            || (get_class($field) === Checkboxes::class)
+            || (get_class($field) === MultiSelect::class)
+            || (get_class($field) === Table::class);
+    }
+
+    public static function isRequiredField($field): bool
+    {
+        $c = get_class($field);
+
+        // If option field has default option -> set it to required as there is always a valid value
+        if ($c === Dropdown::class || $c === RadioButtons::class || $c === Checkboxes::class || $c === MultiSelect::class || $c === ButtonGroup::class) {
+            if (property_exists($field, 'options')) {
+                foreach ($field->options as $option) {
+                    if ($option["default"] === '1') {
+                        return true;
+                    }
+                }
+            }
+        }
+        return (property_exists($field, 'required') && $field->required);
     }
 
     /**
