@@ -6,7 +6,8 @@ use Craft;
 use craft\elements\Asset;
 use craft\errors\ImageTransformException;
 use craft\errors\InvalidFieldException;
-use samuelreichoer\queryapi\helpers\Utils;
+use samuelreichoer\queryapi\enums\AssetMode;
+use samuelreichoer\queryapi\helpers\AssetHelper;
 use yii\base\InvalidConfigException;
 
 class AssetTransformer extends BaseTransformer
@@ -28,9 +29,9 @@ class AssetTransformer extends BaseTransformer
      */
     public function getTransformedData(array $predefinedFields = []): array
     {
-        $imageMode = Utils::isPluginInstalledAndEnabled('imager-x') ? 'imagerX' : 'craft';
+        $imageMode = AssetHelper::getAssetMode();
 
-        if ($imageMode === 'imagerX') {
+        if ($imageMode === AssetMode::IMAGERX) {
             return $this->imagerXTransformer();
         }
 
@@ -93,7 +94,7 @@ class AssetTransformer extends BaseTransformer
      */
     private function getAllAvailableSrcSets(): array
     {
-        $transforms = $this->getTransformKeys();
+        $transforms = AssetHelper::getImagerXTransformKeys();
         $imagerX = Craft::$app->plugins->getPlugin('imager-x');
         $srcSetArr = [];
 
@@ -106,21 +107,5 @@ class AssetTransformer extends BaseTransformer
         }
 
         return $srcSetArr;
-    }
-
-    /**
-     * @return array
-     */
-    private function getTransformKeys(): array
-    {
-        $configPath = Craft::getAlias('@config/imager-x-transforms.php');
-
-        if (!file_exists($configPath)) {
-            return [];
-        }
-
-        $transforms = include $configPath;
-
-        return $transforms ? array_keys($transforms) : [];
     }
 }
