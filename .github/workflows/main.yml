@@ -52,6 +52,27 @@ jobs:
       - name: Install Bruno CLI
         run: npm install -g @usebruno/cli
 
+      - name: Wait till deployment is ready
+        run: sleep 60s
+
       - name: Run API Tests
         run: bru run --env stage
         working-directory: tests/queryApiCollection
+
+  typescript_test:
+    runs-on: ubuntu-latest
+    needs: [deploy_test]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run API Tests
+        run: npm run validate stage
