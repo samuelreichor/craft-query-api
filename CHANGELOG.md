@@ -1,5 +1,16 @@
 # Release Notes for Craft Query API
 
+## 3.1.0 - 2025-05-04
+### Added
+- Console command that generates TypeScript types for all element types.
+- Add event to adjust generated types and to add types.
+- Query API now requires Craft CMS 5.7 or higher.
+
+### Improved
+- Native link fields do return all data now and not just url and element type.
+- Native field detection does work better now.
+- Small refactorings for better readability.
+
 ## 3.0.1 - 2025-04-30
 - Fix permission error in allRoutes api endpoint and add tests for this endpoint.
 - Change some namings of allRoutes logic to enhance readability.
