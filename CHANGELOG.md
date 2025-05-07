@@ -1,5 +1,8 @@
 # Release Notes for Craft Query API
 
+## 3.1.1 - 2025-xx-xx
+- Fixed small indent issue on type generation.
+
 ## 3.1.0 - 2025-05-04
 ### Added
 - Console command that generates TypeScript types for all element types.

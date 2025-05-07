@@ -260,21 +260,21 @@ export interface CraftEntryTypeRelationalFieldsWithMaxSetting {
 }
 
 export interface CraftPageHome extends CraftEntryTypeHome {
-  metadata: CraftEntryMeta
-  title: string
-  sectionHandle: string
+    metadata: CraftEntryMeta
+    title: string
+    sectionHandle: string
 }
 
 export interface CraftPageDefaultFields extends CraftEntryTypeDefaultFields {
-  metadata: CraftEntryMeta
-  title: string
-  sectionHandle: string
+    metadata: CraftEntryMeta
+    title: string
+    sectionHandle: string
 }
 
 export interface CraftPageRelationalFieldsWithMaxSetting extends CraftEntryTypeRelationalFieldsWithMaxSetting {
-  metadata: CraftEntryMeta
-  title: string
-  sectionHandle: string
+    metadata: CraftEntryMeta
+    title: string
+    sectionHandle: string
 }
 
 
