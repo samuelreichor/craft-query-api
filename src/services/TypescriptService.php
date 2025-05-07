@@ -340,9 +340,9 @@ class TypescriptService extends Component
                 $refTypeName = 'CraftEntryType' . $handle;
 
                 $ts .= "export interface {$typeName} extends {$refTypeName} {\n";
-                $ts .= "  metadata: CraftEntryMeta\n";
-                $ts .= "  title: string\n";
-                $ts .= "  sectionHandle: string\n";
+                $ts .= "    metadata: CraftEntryMeta\n";
+                $ts .= "    title: string\n";
+                $ts .= "    sectionHandle: string\n";
                 $ts .= "}\n\n";
 
                 $generatedEntryPageTypes[] = $typeName;
