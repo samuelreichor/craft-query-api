@@ -2,6 +2,7 @@
 
 ## 3.1.1 - 2025-xx-xx
 - Fixed small indent issue on type generation.
+- Fixed caching issues with preview urls.
 
 ## 3.1.0 - 2025-05-04
 ### Added

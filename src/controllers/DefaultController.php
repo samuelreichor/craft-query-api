@@ -6,6 +6,7 @@ use Craft;
 use craft\elements\Entry;
 use craft\helpers\ArrayHelper;
 use craft\web\Controller;
+use craft\web\Request;
 use Exception;
 use samuelreichoer\queryapi\Constants;
 use samuelreichoer\queryapi\helpers\Permissions;
@@ -83,7 +84,7 @@ class DefaultController extends Controller
                 'params' => $params,
             ]);
 
-        if ($result = Craft::$app->getCache()->get($cacheKey)) {
+        if (($result = Craft::$app->getCache()->get($cacheKey)) && $this->getIsCacheableRequest($request)) {
             return $result;
         }
 
@@ -262,5 +263,14 @@ class DefaultController extends Controller
         }
 
         return $siteIds;
+    }
+
+    private function getIsCacheableRequest(Request $request): bool
+    {
+        if ($request->getIsPreview() || $request->getIsLivePreview()) {
+            return false;
+        }
+
+        return true;
     }
 }
