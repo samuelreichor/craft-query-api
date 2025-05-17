@@ -1,6 +1,9 @@
 # Release Notes for Craft Query API
 
-## 3.1.1 - 2025-xx-xx
+## 3.1.2 - 2025-xx-xx
+- Remove authorOf query param from user, because not really doable.
+
+## 3.1.1 - 2025-05-17
 - Fixed small indent issue on type generation.
 - Fixed caching issues with preview urls.
 
