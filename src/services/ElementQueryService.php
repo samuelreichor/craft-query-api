@@ -39,7 +39,7 @@ class ElementQueryService extends Component
         'addresses' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'addressLine1', 'addressLine2', 'addressLine3', 'locality', 'organization', 'fullName'],
         'assets' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'volume', 'kind', 'filename', 'site', 'siteId'],
         'entries' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'slug', 'uri', 'section', 'sectionId', 'postDate', 'site', 'siteId', 'level', 'type'],
-        'users' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'admin', 'group', 'groupId', 'authorOf', 'email', 'fullName', 'hasPhoto'],
+        'users' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'admin', 'group', 'groupId', 'email', 'fullName', 'hasPhoto'],
     ];
 
     /**
