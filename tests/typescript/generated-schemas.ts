@@ -114,6 +114,12 @@ export const craftEntryMetaSchema = z.object({
   cpEditUrl: z.string(),
 });
 
+export const craftPageBaseSchema = z.object({
+  metadata: craftEntryMetaSchema,
+  sectionHandle: z.string(),
+  title: z.string(),
+});
+
 export const craftTagMetaSchema = z.object({
   id: z.number(),
 });

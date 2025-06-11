@@ -562,6 +562,12 @@ class TypescriptService extends Component
             cpEditUrl: string
         }
         
+        export interface CraftPageBase {
+            metadata: CraftEntryMeta
+            sectionHandle: string
+            title: string
+        }
+        
         export type CraftTagMeta = {
             id: number
         }
