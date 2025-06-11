@@ -61,14 +61,12 @@ class DefaultController extends Controller
         $elementType = 'entries';
         if (isset($params['elementType']) && $params['elementType']) {
             $elementType = $params['elementType'];
-            unset($params['elementType']);
         }
 
         // Transform string of field handles to array
         $predefinedFieldHandleArr = [];
         if (isset($params['fields']) && $params['fields']) {
             $predefinedFieldHandleArr = explode(',', $params['fields']);
-            unset($params['fields']);
         }
 
         // Transform all other comma seperated strings to array
