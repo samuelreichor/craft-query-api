@@ -83,7 +83,7 @@ class DefaultController extends Controller
             ]);
 
         if (($result = Craft::$app->getCache()->get($cacheKey)) && $this->getIsCacheableRequest($request)) {
-            return $result;
+            return $this->asJson($result);
         }
 
         // Set cache duration of config and fallback to general craft cache duration
@@ -99,7 +99,7 @@ class DefaultController extends Controller
         $transformerService = new JsonTransformerService($queryService);
         $transformedData = $transformerService->executeTransform($result, $predefinedFieldHandleArr);
 
-        $finalResult = $this->asJson($queryOne ? ($transformedData[0] ?? null) : $transformedData);
+        $finalResult = $queryOne ? ($transformedData[0] ?? null) : $transformedData;
 
         [$craftDependency] = Craft::$app->getElements()->stopCollectingCacheInfo();
 
@@ -114,7 +114,7 @@ class DefaultController extends Controller
             $combinedDependency
         );
 
-        return $finalResult;
+        return $this->asJson($finalResult);
     }
 
     /**
