@@ -1,7 +1,10 @@
 # Release Notes for Craft Query API
 
-## 3.1.2 - 2025-xx-xx
+## 3.1.2 - 2025-06-20
 - Remove authorOf query param from user, because not really doable.
+- Add CraftPageBase to auto type generation.
+- Fix caching invalidation issue with the fields() and element type property.
+- Fix missing CORS header on cached results.
 
 ## 3.1.1 - 2025-05-17
 - Fixed small indent issue on type generation.
