@@ -28,10 +28,10 @@
 ## Features
 
 - API to query addresses, assets, entries and users based on url parameters.
-- API for query all urls of every active page with template for prerendering.
+- API for fetching all urls of every active page with template for prerendering.
 - Automatic detection of ImagerX transforms.
 - Automatic detection of native and custom fields on all elementTypes.
-- Events to add your own Json Transformers and Element Types. 
+- Events to add your own JSON Transformers and Element Types. 
 
 ## Requirements
 
@@ -41,12 +41,13 @@ This plugin requires Craft CMS 5.0.0 or later, and PHP 8.2 or later.
 
 Visit the Craft [Query API Plugin page](https://samuelreichor.at/libraries/craft-query-api) for all documentation, guides, pricing and developer resources.
 
-## Further Resources
+## Supported Platforms
 
-- [Vue Craft CMS](https://samuelreichor.at/libraries/vue-craftcms): A package to use the query builder in Vue.
-- [Nuxt Craft CMS](https://samuelreichor.at/libraries/nuxt-craftcms): A package to use the query builder in Nuxt.
-- [JS Craft CMS API](https://samuelreichor.at/libraries/js-craftcms-api): This package brings the query builder of craft CMS into the js ecosystem. 
-You can build wrappers around it to support your framework.
+- [`@query-api/js`](https://samuelreichor.at/libraries/js-craftcms-api): Core SDK for all JavaScript Frameworks.
+- [`@query-api/vue`](https://samuelreichor.at/libraries/vue-craftcms): SDK for Vue.
+- [`@query-api/nuxt`](https://samuelreichor.at/libraries/nuxt-craftcms): SDK for Nuxt.
+- [`@query-api/react`](https://samuelreichor.at/libraries/query-api-react): SDK for React.
+- [`@query-api/next`](https://samuelreichor.at/libraries/query-api-next): SDK for Next.
 
 
 ## Support
