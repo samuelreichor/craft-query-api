@@ -7,6 +7,7 @@ use craft\fieldlayoutelements\users\PhotoField;
 use craft\fields\ButtonGroup;
 use craft\fields\Checkboxes;
 use craft\fields\Dropdown;
+use craft\fields\Icon;
 use craft\fields\MultiSelect;
 use craft\fields\RadioButtons;
 use craft\fields\Table;
@@ -69,7 +70,8 @@ class Utils
         return (property_exists($field, 'maxEntries') && $field->maxEntries === 1)
             || (property_exists($field, 'maxRelations') && $field->maxRelations === 1)
             || (property_exists($field, 'maxAddresses') && $field->maxAddresses === 1)
-            || (get_class($field) === PhotoField::class);
+            || (get_class($field) === PhotoField::class)
+            || (get_class($field) === Icon::class);
     }
 
     public static function isArrayField($field): bool

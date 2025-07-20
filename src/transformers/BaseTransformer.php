@@ -15,6 +15,7 @@ use craft\fields\Categories;
 use craft\fields\Color;
 use craft\fields\Country;
 use craft\fields\Entries;
+use craft\fields\Icon;
 use craft\fields\Link;
 use craft\fields\Matrix;
 use craft\fields\Tags;
@@ -154,6 +155,7 @@ abstract class BaseTransformer extends Component
             Color::class => $this->transformColor($fieldValue),
             Country::class => $this->transformCountry($fieldValue),
             Entries::class => $this->transformEntries($fieldValue->all()),
+            Icon::class => $this->transformIcon($fieldValue),
             Matrix::class => $this->transformMatrixField($fieldValue->all()),
             Link::class => $this->transformLinks($fieldValue),
             Tags::class => $this->transformTags($fieldValue->all()),
@@ -165,7 +167,7 @@ abstract class BaseTransformer extends Component
     /**
      * Transforms a native field based on its class.
      *
-     * @param mixed  $fieldValue
+     * @param mixed $fieldValue
      * @param string $fieldClass
      * @return mixed
      */
@@ -220,7 +222,7 @@ abstract class BaseTransformer extends Component
             foreach ($block->getFieldValues() as $fieldHandle => $fieldValue) {
                 $field = $block->getFieldLayout()->getFieldByHandle($fieldHandle);
 
-                // Check if field has a limit of relations
+                // Check if the field has a limit of relations
                 $isSingleRelation = Utils::isSingleRelationField($field);
                 $fieldClass = get_class($field);
 
@@ -405,6 +407,21 @@ abstract class BaseTransformer extends Component
             'currencyCode' => $country->getCurrencyCode(),
             'timezones' => $country->getTimezones(),
         ];
+    }
+
+    /**
+     * Transforms a icon element
+     *
+     * @param mixed $icon
+     * @return array
+     */
+    protected function transformIcon(mixed $icon): array
+    {
+        if (empty($icon)) {
+            return [];
+        }
+
+        return [$icon->name];
     }
 
     /**
