@@ -179,25 +179,21 @@ export interface CraftEntryTypeCta {
 }
 
 export interface CraftEntryTypeImageText {
-    title: string
     asset: (CraftAsset)[] | null
     plainText: string | null
 }
 
 export interface CraftEntryTypeHyperLink {
-    title: string
     hyperField: DynamicHardType
 }
 
 export interface CraftEntryTypeLink {
-    title: string
     linkText: string | null
     openInNewTab: boolean | null
     linkField: CraftLink | null
 }
 
 export interface CraftEntryTypeNewsTeaser {
-    title: string
     categories: (CraftCategoryNewsFilter)[] | null
     newsTag: (CraftTag)[] | null
 }
@@ -218,7 +214,6 @@ export interface CraftEntryTypeHeadline {
 }
 
 export interface CraftEntryTypeAuthor {
-    title: string
     selectAuthor: (CraftUser)[] | null
     address: (CraftAddress)[] | null
     linkField: CraftLink | null
@@ -232,6 +227,7 @@ export interface CraftEntryTypeDefaultFields {
     categories: (CraftCategoryNewsFilter)[]
     checkboxes: (CraftOptionCheckboxes)[]
     color: CraftColor
+    contentBlock: CraftContentBlockContentBlock | null
     country: CraftCountry
     date: CraftDateTime | null
     dropdown: CraftOptionDropdown | null
@@ -326,6 +322,8 @@ export type CraftOptionDropdown = {
     label: string
     selected: boolean
     valid: boolean
+    icon: string | null
+    color: string | null
     value: CraftOptionValueDropdown
 }
 
@@ -335,6 +333,8 @@ export type CraftOptionHeadlineTag = {
     label: string
     selected: boolean
     valid: boolean
+    icon: string | null
+    color: string | null
     value: CraftOptionValueHeadlineTag
 }
 
@@ -344,6 +344,8 @@ export type CraftOptionRadioButtons = {
     label: string
     selected: boolean
     valid: boolean
+    icon: string | null
+    color: string | null
     value: CraftOptionValueRadioButtons
 }
 
@@ -353,6 +355,8 @@ export type CraftOptionCheckboxes = {
     label: string
     selected: boolean
     valid: boolean
+    icon: string | null
+    color: string | null
     value: CraftOptionValueCheckboxes
 }
 
@@ -362,6 +366,8 @@ export type CraftOptionMultiSelect = {
     label: string
     selected: boolean
     valid: boolean
+    icon: string | null
+    color: string | null
     value: CraftOptionValueMultiSelect
 }
 
@@ -371,7 +377,18 @@ export type CraftOptionButtonGroup = {
     label: string
     selected: boolean
     valid: boolean
+    icon: string | null
+    color: string | null
     value: CraftOptionValueButtonGroup
+}
+
+
+
+// --- contentBlocks ---
+export interface CraftContentBlockContentBlock {
+    richtext: string | null
+    singleMatrix: CraftEntryTypeCta | null
+    matrix: (CraftEntryTypeHeadline | CraftEntryTypeImageText)[] | null
 }
 
 
