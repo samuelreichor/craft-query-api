@@ -153,6 +153,7 @@ abstract class BaseTransformer extends Component
             Assets::class => $this->transformAssets($fieldValue->all()),
             Categories::class => $this->transformCategories($fieldValue->all()),
             Color::class => $this->transformColor($fieldValue),
+            'craft\fields\ContentBlock' => $this->transformContentBlock($fieldValue),
             Country::class => $this->transformCountry($fieldValue),
             Entries::class => $this->transformEntries($fieldValue->all()),
             Icon::class => $this->transformIcon($fieldValue),
@@ -238,6 +239,31 @@ abstract class BaseTransformer extends Component
         }
 
         return $transformedData;
+    }
+
+    /**
+     * @throws InvalidFieldException
+     * @throws ImageTransformException
+     * @throws InvalidConfigException
+     */
+    protected function transformContentBlock(mixed $block)
+    {
+        $blockData = [];
+
+        foreach ($block->getFieldValues() as $fieldHandle => $fieldValue) {
+            $field = $block->getFieldLayout()->getFieldByHandle($fieldHandle);
+
+            $isSingleRelation = Utils::isSingleRelationField($field);
+            $fieldClass = get_class($field);
+
+            // Exclude fields in matrix blocks
+            if (in_array($fieldClass, $this->excludeFieldClasses, true)) {
+                continue;
+            }
+
+            $blockData[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass);
+        }
+        return $blockData;
     }
 
     /**

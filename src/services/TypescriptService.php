@@ -72,6 +72,10 @@ class TypescriptService extends Component
             'options' => $this->getOptionTypes(),
         ];
 
+        if (version_compare(Craft::$app->getVersion(), '5.8.0', '>=')) {
+            $schema['contentBlocks'] = $this->getContentBlockTypes();
+        }
+
         if (count($this->customTypeDefinitions) > 0) {
             $schema['customHardTypes'] = $this->getCustomHardTypes();
         }
@@ -222,6 +226,7 @@ class TypescriptService extends Component
                     Matrix::class => $this->modifyTypeByField($field, $this->getEntryTypesByField($field)),
                     Table::class => $this->modifyTypeByField($field, $this->getTableTypeByField($field)),
                     Categories::class => $this->modifyTypeByField($field, $this->getCategoryTypeByField($field)),
+                    'craft\fields\ContentBlock' => $this->modifyTypeByField($field, $this->getContentTypeByField($field)), // @phpstan-ignore-line
                     default => 'any',
                 };
             }
@@ -440,6 +445,35 @@ class TypescriptService extends Component
         }
 
         return implode(' | ', $availableTypes);
+    }
+
+    protected function getContentBlockTypes(): string
+    {
+        if (!class_exists('craft\fields\ContentBlock')) {
+            return '';
+        }
+
+        $ts = '';
+        /** @var class-string<\craft\base\FieldInterface> $contentBlockClass */
+        $contentBlockClass = 'craft\fields\ContentBlock';
+        $allContentBlockFields = Craft::$app->fields->getFieldsByType($contentBlockClass);
+        foreach ($allContentBlockFields as $cbField) {
+            /** @var \craft\fields\ContentBlock $cbField */
+            $handle = StringHelper::toPascalCase($cbField->handle);
+            $typeName = 'CraftContentBlock' . $handle;
+            $fieldTypes = $this->getTypesByFieldLayout($cbField->getFieldLayout());
+            $ts .= Typescript::buildTsType($fieldTypes, $typeName, 'interface') . "\n\n";
+        }
+
+        return $ts;
+    }
+
+    protected function getContentTypeByField(\craft\base\FieldInterface $field): string
+    {
+        if (!class_exists('craft\fields\ContentBlock') || !$field instanceof \craft\fields\ContentBlock) {
+            return 'any';
+        }
+        return 'CraftContentBlock' . StringHelper::toPascalCase($field->handle);
     }
 
     protected function getTableTypeByField(Table $field): string
