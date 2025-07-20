@@ -271,4 +271,16 @@ class DefaultController extends Controller
 
         return true;
     }
+
+    /*    public function actionGenerateTypes()
+        {
+            $code = QueryApi::getInstance()->typescript->getTypes();
+
+            return Craft::$app->response
+                ->setStatusCode(200)
+                ->sendContentAsFile($code, 'types.d.ts', [
+                    'mimeType' => 'text/plain',
+                    'inline' => true,
+                ]);
+        }*/
 }

@@ -4,13 +4,13 @@ namespace samuelreichoer\queryapi\services;
 
 use Craft;
 use craft\base\Component;
-use craft\base\Field;
 use craft\elements\User;
 use craft\fieldlayoutelements\addresses\AddressField;
 use craft\fieldlayoutelements\addresses\CountryCodeField;
 use craft\fieldlayoutelements\assets\AltField;
 use craft\fieldlayoutelements\BaseField;
 use craft\fieldlayoutelements\CustomField;
+use craft\fieldlayoutelements\entries\EntryTitleField;
 use craft\fieldlayoutelements\users\PhotoField;
 use craft\fields\Addresses;
 use craft\fields\Assets;
@@ -58,7 +58,6 @@ class TypescriptService extends Component
         parent::__construct();
         $this->registerCustomTypeDefinitions();
     }
-
 
     public function getTypes(): string
     {
@@ -140,6 +139,15 @@ class TypescriptService extends Component
         $tsFieldTypes = [];
         foreach ($fieldElements as $field) {
             $fieldClass = get_class($field);
+
+            // only include title type in entry types if the entry type actually has a title field.
+            if ($field instanceof EntryTitleField) {
+                // @phpstan-ignore-next-line
+                if (property_exists($fieldLayout->provider, 'hasTitleField') && !$fieldLayout->provider->hasTitleField) {
+                    continue;
+                }
+            }
+
             // only custom fields have the getField() method
             if (method_exists($field, 'getField')) {
                 $field = $field->getField();
@@ -156,7 +164,6 @@ class TypescriptService extends Component
             }
 
             $fieldHandle = $field->handle ?? $field->attribute ?? 'unknown';
-            $isSingleRelation = Utils::isSingleRelationField($field);
 
             // Check for custom type definition
             foreach ($this->customTypeDefinitions as $definition) {
@@ -385,6 +392,8 @@ class TypescriptService extends Component
             'label' => 'string',
             'selected' => 'boolean',
             'valid' => 'boolean',
+            'icon' => 'string | null',
+            'color' => 'string | null',
         ];
 
         $optionClasses = [Dropdown::class, RadioButtons::class, Checkboxes::class, MultiSelect::class, 'craft\fields\ButtonGroup'];
