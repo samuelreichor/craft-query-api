@@ -1,5 +1,16 @@
 # Release Notes for Craft Query API
 
+## 3.2.0 - 2025-07-20
+
+### Added
+
+- Added Support for the new Content Block field in Craft 5.8.0.
+- Added icon transformer to reduce response data.
+
+### Fixed
+
+- Fixes a bug in the ts generation for Entry Types. It now checks for the title field in the entry type. If there is one, the title: string type gets added.
+
 ## 3.1.2 - 2025-06-20
 - Remove authorOf query param from user, because not really doable.
 - Add CraftPageBase to auto type generation.
