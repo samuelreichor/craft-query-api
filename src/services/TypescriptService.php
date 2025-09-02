@@ -5,6 +5,7 @@ namespace samuelreichoer\queryapi\services;
 use Craft;
 use craft\base\Component;
 use craft\elements\User;
+use craft\errors\FieldNotFoundException;
 use craft\fieldlayoutelements\addresses\AddressField;
 use craft\fieldlayoutelements\addresses\CountryCodeField;
 use craft\fieldlayoutelements\assets\AltField;
@@ -154,7 +155,12 @@ class TypescriptService extends Component
 
             // only custom fields have the getField() method
             if (method_exists($field, 'getField')) {
-                $field = $field->getField();
+                try {
+                    $field = $field->getField();
+                } catch (FieldNotFoundException $e) {
+                    // sometimes trashed items are still in the layout but don't exist.
+                    continue;
+                }
                 $fieldClass = get_class($field);
             }
 

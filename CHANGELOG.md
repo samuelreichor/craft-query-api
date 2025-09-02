@@ -1,5 +1,11 @@
 # Release Notes for Craft Query API
 
+## 3.2.1 - 2025-09-xx
+
+### Fixed
+
+- Fix php error that can occur if fields are trashed and accessed with getFields().
+
 ## 3.2.0 - 2025-07-20
 
 ### Added

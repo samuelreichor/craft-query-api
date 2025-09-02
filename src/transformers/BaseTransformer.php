@@ -5,6 +5,7 @@ namespace samuelreichoer\queryapi\transformers;
 use Craft;
 use craft\base\Component;
 use craft\base\ElementInterface;
+use craft\errors\FieldNotFoundException;
 use craft\errors\ImageTransformException;
 use craft\errors\InvalidFieldException;
 use craft\fieldlayoutelements\BaseField;
@@ -79,7 +80,12 @@ abstract class BaseTransformer extends Component
 
             // only custom fields have the getField() method
             if (method_exists($field, 'getField')) {
-                $field = $field->getField();
+                try {
+                    $field = $field->getField();
+                } catch (FieldNotFoundException $e) {
+                    // sometimes trashed items are still in the layout but don't exist.
+                    continue;
+                }
                 $fieldClass = get_class($field);
             }
 
