@@ -1,9 +1,10 @@
 # Release Notes for Craft Query API
 
-## 3.2.1 - 2025-09-xx
+## 3.2.1 - 2025-09-07
 
 ### Fixed
 
+- Improve error handling of serialization errors that can occur with custom fields installed by modules or plugins in custom query endpoint.
 - Fix php error that can occur if fields are trashed and accessed with getFields().
 
 ## 3.2.0 - 2025-07-20
