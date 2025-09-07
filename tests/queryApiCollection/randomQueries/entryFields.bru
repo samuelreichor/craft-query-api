@@ -1,0 +1,37 @@
+meta {
+  name: Entry Fields
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}?elementType=entries&id=48&fields=entries.metadata,entries.asset&one=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  elementType: entries
+  id: 48
+  fields: entries.metadata,entries.asset
+  one: 1
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const helper = require('./tests');
+  const properties = {
+    metadata: [['id', 'entryType'], false],
+    sectionHandle: [[], false, 'string'],
+    entries: [['metadata', 'asset'], true],
+  }
+  
+  helper.isValidNestedDataResp(properties)
+}
+
+settings {
+  encodeUrl: true
+}

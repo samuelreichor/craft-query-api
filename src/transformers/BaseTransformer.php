@@ -31,6 +31,7 @@ abstract class BaseTransformer extends Component
 {
     protected ElementInterface $element;
     public const EVENT_REGISTER_FIELD_TRANSFORMERS = 'registerTransformers';
+    public array|null $predefinedFields = [];
     private array $customTransformers = [];
 
     private array $excludeFieldClasses;
@@ -71,10 +72,11 @@ abstract class BaseTransformer extends Component
      */
     protected function getTransformedFields(array $predefinedFields = []): array
     {
+        $this->prepAndSetPredefinedFields($predefinedFields);
         $fieldLayout = $this->element->getFieldLayout();
         $fieldElements = array_merge($fieldLayout->getElementsByType(BaseField::class), $fieldLayout->getElementsByType(CustomField::class));
         $transformedFields = [];
-
+        $forceEnableFullEntriesResponse = false;
         foreach ($fieldElements as $field) {
             $fieldClass = get_class($field);
 
@@ -96,8 +98,10 @@ abstract class BaseTransformer extends Component
             }
 
             // Check if fieldHandle is in predefinedFields or if predefinedFields is empty
-            if (!empty($predefinedFields) && !in_array($fieldHandle, $predefinedFields, true)) {
+            if (!empty($this->predefinedFields) && !array_key_exists($fieldHandle, $this->predefinedFields)) {
                 continue;
+            } elseif ($fieldClass === Entries::class && is_array($this->predefinedFields[$fieldHandle])) {
+                $forceEnableFullEntriesResponse = true;
             }
 
             if (in_array($fieldClass, $this->excludeFieldClasses, true)) {
@@ -107,7 +111,7 @@ abstract class BaseTransformer extends Component
             $isSingleRelation = Utils::isSingleRelationField($field);
             try {
                 $fieldValue = $this->element->getFieldValue($fieldHandle);
-                $transformedFields[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass);
+                $transformedFields[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass, $forceEnableFullEntriesResponse);
             } catch (InvalidFieldException) {
                 // handle native fields
                 $fieldValue = $this->element->$fieldHandle;
@@ -115,7 +119,7 @@ abstract class BaseTransformer extends Component
             }
         }
 
-        return $transformedFields;
+        return $this->filterByPredefinedFields($transformedFields, $this->predefinedFields);
     }
 
     /**
@@ -127,7 +131,7 @@ abstract class BaseTransformer extends Component
      * @throws InvalidFieldException|InvalidConfigException
      * @throws ImageTransformException
      */
-    protected function transformCustomField(mixed $fieldValue, string $fieldClass): mixed
+    protected function transformCustomField(mixed $fieldValue, string $fieldClass, bool $forceEnableFullEntriesResponse): mixed
     {
         if (!$fieldValue || !$fieldClass) {
             return null;
@@ -161,7 +165,7 @@ abstract class BaseTransformer extends Component
             Color::class => $this->transformColor($fieldValue),
             'craft\fields\ContentBlock' => $this->transformContentBlock($fieldValue),
             Country::class => $this->transformCountry($fieldValue),
-            Entries::class => $this->transformEntries($fieldValue->all()),
+            Entries::class => $this->transformEntries($fieldValue->all(), $forceEnableFullEntriesResponse),
             Icon::class => $this->transformIcon($fieldValue),
             Matrix::class => $this->transformMatrixField($fieldValue->all()),
             Link::class => $this->transformLinks($fieldValue),
@@ -295,16 +299,21 @@ abstract class BaseTransformer extends Component
      * @param array $entries
      * @return array
      */
-    protected function transformEntries(array $entries): array
+    protected function transformEntries(array $entries, bool $forceFullResponse = false): array
     {
         $transformedData = [];
         foreach ($entries as $entry) {
-            $transformedData[] = [
-                'title' => $entry->title,
-                'slug' => $entry->slug,
-                'url' => $entry->url,
-                'id' => $entry->id,
-            ];
+            if ($forceFullResponse) {
+                $entryTransformer = new EntryTransformer($entry);
+                $transformedData[] = $entryTransformer->getTransformedData();
+            } else {
+                $transformedData[] = [
+                    'title' => $entry->title,
+                    'slug' => $entry->slug,
+                    'url' => $entry->url,
+                    'id' => $entry->id,
+                ];
+            }
         }
         return $transformedData;
     }
@@ -473,14 +482,14 @@ abstract class BaseTransformer extends Component
      * @throws InvalidFieldException
      * @throws ImageTransformException
      */
-    protected function getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass)
+    protected function getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass, bool $forceEnableFullEntriesResponse = false)
     {
         if ($isSingleRelation) {
-            $transformedValue = $this->transformCustomField($fieldValue, $fieldClass);
+            $transformedValue = $this->transformCustomField($fieldValue, $fieldClass, $forceEnableFullEntriesResponse);
             return is_array($transformedValue) && !empty($transformedValue) ? $transformedValue[0] : null;
         }
 
-        return $this->transformCustomField($fieldValue, $fieldClass);
+        return $this->transformCustomField($fieldValue, $fieldClass, $forceEnableFullEntriesResponse);
     }
 
     protected function getExcludedFieldClasses(): array
@@ -490,5 +499,70 @@ abstract class BaseTransformer extends Component
         }
 
         return Constants::EXCLUDED_FIELD_HANDLES;
+    }
+
+    protected function prepAndSetPredefinedFields(array $predefinedFields): void
+    {
+        // ['entries', 'entries.title', 'entries.title.value', 'another'] should be converted to ->
+        // {entries: {title: { value: null }}, another: null, }
+        /** @var array<string, mixed> $tree */
+        $tree = [];
+
+        foreach ($predefinedFields as $path) {
+            $parts = explode('.', $path);
+            $current = &$tree;
+
+            foreach ($parts as $part) {
+                $current[$part] ??= [];
+                $current = &$current[$part];
+            }
+
+            $current = null;
+            unset($current);
+        }
+
+        $this->predefinedFields = $tree;
+    }
+
+    protected function filterByPredefinedFields($data, ?array $tree): mixed
+    {
+        // Leaf: take the entire value
+        if (empty($tree)) {
+            return $data;
+        }
+
+        // No data: nothing to return
+        if ($data === null) {
+            return null;
+        }
+
+        // Scalars: cannot drill down any further
+        if (!is_array($data)) {
+            return $data;
+        }
+
+        // Associative array (object-like)
+        $out = [];
+        if ($this->isAssoc($data)) {
+            foreach ($tree as $key => $subTree) {
+                if (array_key_exists($key, $data)) {
+                    // $subTree can be null (leaf) -> signature must accept ?array
+                    $out[$key] = $this->filterByPredefinedFields($data[$key], $subTree);
+                }
+                // Missing keys are ignored
+            }
+            return $out;
+        }
+
+        // Numeric array (list): apply the same subtree to each item
+        foreach ($data as $item) {
+            $out[] = $this->filterByPredefinedFields($item, $tree);
+        }
+        return $out;
+    }
+
+    protected function isAssoc(array $arr): bool
+    {
+        return array_keys($arr) !== range(0, count($arr) - 1);
     }
 }
