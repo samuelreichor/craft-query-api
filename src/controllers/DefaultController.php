@@ -107,12 +107,21 @@ class DefaultController extends Controller
         $tags[] = Constants::CACHE_TAG_GlOBAL;
         $combinedDependency = new TagDependency(['tags' => $tags]);
 
-        Craft::$app->getCache()->set(
-            $cacheKey,
-            $finalResult,
-            $duration,
-            $combinedDependency
-        );
+        if ($msg = Utils::findUnserializable($finalResult)) {
+            Craft::error("Failed to set cache with params: " . json_encode($params) . ". Serialization failed: " . $msg . " (This can happen with custom fields installed by a plugin or module. Please consider to add a json transformer for this field. https://samuelreichor.at/libraries/craft-query-api/events/add-custom-transformer).", 'queryApi');
+        } else {
+            try {
+                Craft::$app->getCache()->set(
+                    $cacheKey,
+                    $finalResult,
+                    $duration,
+                    $combinedDependency
+                );
+            } catch (Exception $exception) {
+                throw new BadRequestHttpException($exception->getMessage());
+            }
+        }
+
 
         return $this->asJson($finalResult);
     }

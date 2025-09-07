@@ -2,6 +2,7 @@
 
 namespace samuelreichoer\queryapi\helpers;
 
+use Closure;
 use Craft;
 use craft\fieldlayoutelements\users\PhotoField;
 use craft\fields\ButtonGroup;
@@ -11,6 +12,9 @@ use craft\fields\Icon;
 use craft\fields\MultiSelect;
 use craft\fields\RadioButtons;
 use craft\fields\Table;
+use DateTimeInterface;
+use JsonSerializable;
+use Throwable;
 
 class Utils
 {
@@ -100,6 +104,51 @@ class Utils
         }
         return (property_exists($field, 'required') && $field->required);
     }
+
+    public static function findUnserializable(mixed $value): ?string
+    {
+        // 1) Detect closures immediately
+        if ($value instanceof Closure) {
+            return "Closure";
+        }
+
+        // 2) Quick serialization probe
+        try {
+            serialize($value);
+            return null; // everything is fine
+        } catch (Throwable $e) {
+            // continue to deeper inspection
+        }
+
+        // 4) Check objects
+        if (is_object($value)) {
+            // Common safe types
+            if ($value instanceof DateTimeInterface) {
+                return null;
+            }
+            if ($value instanceof JsonSerializable) {
+                json_encode($value);
+                return null;
+            }
+
+            // Inspect public properties if available
+            $props = get_object_vars($value);
+            if (!empty($props)) {
+                foreach ($props as $v) {
+                    if ($msg = self::findUnserializable($v)) {
+                        return $msg;
+                    }
+                }
+            }
+
+            // If no properties are accessible, mark objects itself as problematic
+            return "Object " . get_class($value) . " not serializable.";
+        }
+
+        // Scalars and null are always safe
+        return null;
+    }
+
 
     /**
      * Recursively sorts an array by its keys.
