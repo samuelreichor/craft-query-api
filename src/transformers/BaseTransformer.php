@@ -31,9 +31,12 @@ abstract class BaseTransformer extends Component
 {
     protected ElementInterface $element;
     public const EVENT_REGISTER_FIELD_TRANSFORMERS = 'registerTransformers';
+    public array|null $predefinedFields = [];
     private array $customTransformers = [];
 
     private array $excludeFieldClasses;
+
+    private bool $includeAll = false;
 
     public function __construct(ElementInterface $element)
     {
@@ -71,10 +74,11 @@ abstract class BaseTransformer extends Component
      */
     protected function getTransformedFields(array $predefinedFields = []): array
     {
+        $this->prepAndSetPredefinedFields($predefinedFields);
         $fieldLayout = $this->element->getFieldLayout();
         $fieldElements = array_merge($fieldLayout->getElementsByType(BaseField::class), $fieldLayout->getElementsByType(CustomField::class));
         $transformedFields = [];
-
+        $forceEnableFullEntriesResponse = false;
         foreach ($fieldElements as $field) {
             $fieldClass = get_class($field);
 
@@ -95,11 +99,6 @@ abstract class BaseTransformer extends Component
                 continue;
             }
 
-            // Check if fieldHandle is in predefinedFields or if predefinedFields is empty
-            if (!empty($predefinedFields) && !in_array($fieldHandle, $predefinedFields, true)) {
-                continue;
-            }
-
             if (in_array($fieldClass, $this->excludeFieldClasses, true)) {
                 continue;
             }
@@ -107,7 +106,7 @@ abstract class BaseTransformer extends Component
             $isSingleRelation = Utils::isSingleRelationField($field);
             try {
                 $fieldValue = $this->element->getFieldValue($fieldHandle);
-                $transformedFields[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass);
+                $transformedFields[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass, $forceEnableFullEntriesResponse);
             } catch (InvalidFieldException) {
                 // handle native fields
                 $fieldValue = $this->element->$fieldHandle;
@@ -115,7 +114,7 @@ abstract class BaseTransformer extends Component
             }
         }
 
-        return $transformedFields;
+        return $this->filterByPredefinedFields($transformedFields, $this->predefinedFields);
     }
 
     /**
@@ -127,7 +126,7 @@ abstract class BaseTransformer extends Component
      * @throws InvalidFieldException|InvalidConfigException
      * @throws ImageTransformException
      */
-    protected function transformCustomField(mixed $fieldValue, string $fieldClass): mixed
+    protected function transformCustomField(mixed $fieldValue, string $fieldClass, bool $forceEnableFullEntriesResponse): mixed
     {
         if (!$fieldValue || !$fieldClass) {
             return null;
@@ -161,7 +160,7 @@ abstract class BaseTransformer extends Component
             Color::class => $this->transformColor($fieldValue),
             'craft\fields\ContentBlock' => $this->transformContentBlock($fieldValue),
             Country::class => $this->transformCountry($fieldValue),
-            Entries::class => $this->transformEntries($fieldValue->all()),
+            Entries::class => $this->transformEntries($fieldValue->all(), $forceEnableFullEntriesResponse),
             Icon::class => $this->transformIcon($fieldValue),
             Matrix::class => $this->transformMatrixField($fieldValue->all()),
             Link::class => $this->transformLinks($fieldValue),
@@ -295,16 +294,21 @@ abstract class BaseTransformer extends Component
      * @param array $entries
      * @return array
      */
-    protected function transformEntries(array $entries): array
+    protected function transformEntries(array $entries, bool $forceFullResponse = false): array
     {
         $transformedData = [];
         foreach ($entries as $entry) {
-            $transformedData[] = [
-                'title' => $entry->title,
-                'slug' => $entry->slug,
-                'url' => $entry->url,
-                'id' => $entry->id,
-            ];
+            if ($forceFullResponse) {
+                $entryTransformer = new EntryTransformer($entry);
+                $transformedData[] = $entryTransformer->getTransformedData();
+            } else {
+                $transformedData[] = [
+                    'title' => $entry->title,
+                    'slug' => $entry->slug,
+                    'url' => $entry->url,
+                    'id' => $entry->id,
+                ];
+            }
         }
         return $transformedData;
     }
@@ -473,14 +477,14 @@ abstract class BaseTransformer extends Component
      * @throws InvalidFieldException
      * @throws ImageTransformException
      */
-    protected function getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass)
+    protected function getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass, bool $forceEnableFullEntriesResponse = false)
     {
         if ($isSingleRelation) {
-            $transformedValue = $this->transformCustomField($fieldValue, $fieldClass);
+            $transformedValue = $this->transformCustomField($fieldValue, $fieldClass, $forceEnableFullEntriesResponse);
             return is_array($transformedValue) && !empty($transformedValue) ? $transformedValue[0] : null;
         }
 
-        return $this->transformCustomField($fieldValue, $fieldClass);
+        return $this->transformCustomField($fieldValue, $fieldClass, $forceEnableFullEntriesResponse);
     }
 
     protected function getExcludedFieldClasses(): array
@@ -490,5 +494,149 @@ abstract class BaseTransformer extends Component
         }
 
         return Constants::EXCLUDED_FIELD_HANDLES;
+    }
+
+    /**
+     * Builds the selection tree from the given field paths.
+     * Example:
+     *   ['entries', 'entries.title', 'another']
+     *   becomes
+     *   { entries: { title: null }, another: null }
+     *
+     * Special case:
+     *   '*' only sets includeAll=true, but is NOT added to the tree.
+     */
+    protected function prepAndSetPredefinedFields(array $predefinedFields): void
+    {
+        // Reset includeAll for every call
+        $this->includeAll = false;
+
+        /** @var array<string, mixed> $tree */
+        $tree = [];
+
+        foreach ($predefinedFields as $path) {
+            $path = trim($path);
+
+            // If "*" is present -> mark includeAll, skip adding to tree
+            if ($path === '*') {
+                $this->includeAll = true;
+                continue;
+            }
+
+            // Split path by "." into nested parts
+            $parts = explode('.', $path);
+            $current = &$tree;
+
+            // Build nested arrays for each part
+            foreach ($parts as $part) {
+                $current[$part] ??= [];
+                $current = &$current[$part];
+            }
+
+            $current = null;
+            unset($current);
+        }
+
+        // Save prepared selection tree
+        $this->predefinedFields = $tree;
+    }
+
+    /**
+     * Filters $data according to the prepared tree ($tree).
+     *
+     * Behavior:
+     * - includeAll = false (Pick mode): Only fields in the tree are kept.
+     * - includeAll = true (All + Overrides mode): Return everything,
+     *   but replace subtrees from $tree with a reduced "Pick" result (via pickOnly()).
+     *
+     * @param mixed      $data The input data (scalar, assoc array, list, or null)
+     * @param array|null $tree The selection tree to apply
+     * @return mixed The filtered data
+     */
+    protected function filterByPredefinedFields($data, ?array $tree): mixed
+    {
+        // Case 1: no tree and no includeAll -> always return data as-is
+        if (empty($tree) && $this->includeAll === false) {
+            return $data;
+        }
+
+        // Case 2: data is null -> always return null
+        if ($data === null) {
+            return null;
+        }
+
+        // Case 3: scalar values (string, int, etc.) -> cannot filter further
+        if (!is_array($data)) {
+            return $data;
+        }
+
+        // ---------- Case A: includeAll = false ("Pick" mode) ----------
+        if ($this->includeAll === false) {
+            $out = [];
+
+            // Associative array (object-like)
+            if ($this->isAssoc($data)) {
+                // Always only keep keys that exist in $tree
+                foreach ($tree as $key => $subTree) {
+                    if (array_key_exists($key, $data)) {
+                        // Always recurse into subtree
+                        $out[$key] = $this->filterByPredefinedFields($data[$key], $subTree);
+                    }
+                }
+                return $out;
+            }
+
+            // Numeric array (list) -> apply subtree to each item
+            foreach ($data as $item) {
+                $out[] = $this->filterByPredefinedFields($item, $tree);
+            }
+            return $out;
+        }
+
+        // ---------- Case B: includeAll = true ("All + Overrides" mode) ----------
+        // Start by copying full data
+        $out = $data;
+
+        // Associative array
+        if ($this->isAssoc($data)) {
+            foreach ($tree ?? [] as $key => $subTree) {
+                if (!array_key_exists($key, $data)) {
+                    // Always ignore missing keys
+                    continue;
+                }
+                // Important: for this subtree we force Pick mode
+                $out[$key] = $this->pickOnly($data[$key], $subTree);
+            }
+            return $out;
+        }
+
+        // Numeric array (list) -> apply Pick mode per item
+        return array_map(function ($item) use ($tree) {
+            return $this->pickOnly($item, $tree);
+        }, $data);
+    }
+
+    /**
+     * Forces "Pick" mode once (ignores global includeAll=true).
+     * This is used when includeAll is active, but we still need
+     * to reduce a subtree to only the fields listed in $tree.
+     *
+     * Steps:
+     * - Temporarily disable includeAll
+     * - Run filterByPredefinedFields() in Pick mode
+     * - Restore a previous includeAll flag
+     */
+    protected function pickOnly($data, ?array $tree)
+    {
+        $old = $this->includeAll;              // Remember current flag
+        $this->includeAll = false;             // Force Pick mode
+        $res = $this->filterByPredefinedFields($data, $tree);
+        $this->includeAll = $old;              // Restore flag
+        return $res;
+    }
+
+    protected function isAssoc(array $arr): bool
+    {
+        return array_keys($arr) !== range(0, count($arr) - 1);
     }
 }

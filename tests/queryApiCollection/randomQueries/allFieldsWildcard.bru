@@ -1,0 +1,31 @@
+meta {
+  name: All Fields Wildcard
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}?elementType=entries&id=48&fields=*&one=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  elementType: entries
+  id: 48
+  fields: *
+  one: 1
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const helper = require('./tests');
+  helper.isValidAllDefaultFieldsResp(true)
+}
+
+settings {
+  encodeUrl: true
+}
