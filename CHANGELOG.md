@@ -1,5 +1,11 @@
 # Release Notes for Craft Query API
 
+## 3.3.0 - 2025-09-xx
+
+### Added
+
+- Add enhancements to the .fields() property. It's possible now to filter the response with dot notation (entries.fieldHandle).
+
 ## 3.2.1 - 2025-09-07
 
 ### Fixed

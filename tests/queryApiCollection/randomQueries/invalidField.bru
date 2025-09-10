@@ -1,0 +1,27 @@
+meta {
+  name: Invalid Field
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}?elementType=entries&id=48&fields=asdfjklö&one=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  elementType: entries
+  id: 48
+  fields: asdfjklö
+  one: 1
+}
+
+tests {
+  const helper = require('./tests');
+  helper.isValidDataResp(['metadata', 'sectionHandle'])
+}
+
+settings {
+  encodeUrl: true
+}
