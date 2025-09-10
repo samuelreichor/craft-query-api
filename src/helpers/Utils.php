@@ -105,7 +105,7 @@ class Utils
         return (property_exists($field, 'required') && $field->required);
     }
 
-    public static function findUnserializable(mixed $value): ?string
+    public static function findUnserializable(mixed $value, string $path = ''): ?string
     {
         // 1) Detect closures immediately
         if ($value instanceof Closure) {
@@ -118,6 +118,17 @@ class Utils
             return null; // everything is fine
         } catch (Throwable $e) {
             // continue to deeper inspection
+        }
+
+        // 3) Check arrays recursively
+        if (is_array($value)) {
+            foreach ($value as $k => $v) {
+                $p = is_int($k) ? "{$path}[{$k}]" : "{$path}.{$k}";
+                if ($msg = self::findUnserializable($v, $p)) {
+                    return $msg;
+                }
+            }
+            return "Array not serializable, unknown item";
         }
 
         // 4) Check objects
@@ -148,7 +159,6 @@ class Utils
         // Scalars and null are always safe
         return null;
     }
-
 
     /**
      * Recursively sorts an array by its keys.
