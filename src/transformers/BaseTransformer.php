@@ -217,27 +217,11 @@ abstract class BaseTransformer extends Component
         $transformedData = [];
 
         foreach ($matrixFields as $block) {
-            $blockData = [
-                'type' => $block->type->handle,
-            ];
+            $blockData = $this->getBlockData($block);
+            $blockData['type'] = $block->type->handle;
 
             if ($block->title) {
                 $blockData['title'] = $block->title;
-            }
-
-            foreach ($block->getFieldValues() as $fieldHandle => $fieldValue) {
-                $field = $block->getFieldLayout()->getFieldByHandle($fieldHandle);
-
-                // Check if the field has a limit of relations
-                $isSingleRelation = Utils::isSingleRelationField($field);
-                $fieldClass = get_class($field);
-
-                // Exclude fields in matrix blocks
-                if (in_array($fieldClass, $this->excludeFieldClasses, true)) {
-                    continue;
-                }
-
-                $blockData[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass);
             }
 
             $transformedData[] = $blockData;
@@ -252,6 +236,16 @@ abstract class BaseTransformer extends Component
      * @throws InvalidConfigException
      */
     protected function transformContentBlock(mixed $block)
+    {
+        return $this->getBlockData($block);
+    }
+
+    /**
+     * @throws InvalidFieldException
+     * @throws InvalidConfigException
+     * @throws ImageTransformException
+     */
+    protected function getBlockData(mixed $block): array
     {
         $blockData = [];
 
