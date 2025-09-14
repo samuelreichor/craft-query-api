@@ -156,6 +156,79 @@ function isValidAllRoutesResp() {
   });
 }
 
+// Returns all nodes that match a dotted path with [] array markers, starting from root.
+function getNodesAtPath(root, path) {
+  if (!path) return [root];
+  const tokens = path.split('.');
+  let nodes = [root];
+
+  tokens.forEach((token) => {
+    const isArrayToken = token.endsWith('[]');
+    const key = isArrayToken ? token.slice(0, -2) : token;
+
+    const next = [];
+    nodes.forEach((node) => {
+      const val = node?.[key];
+
+      test(`Path "${key}" exists`, function () {
+        expect(val, `Missing "${key}"`).to.not.be.undefined;
+      });
+
+      if (isArrayToken) {
+        test(`"${key}" is an array`, function () {
+          expect(Array.isArray(val), `"${key}" should be an array`).to.be.true;
+        });
+        if (Array.isArray(val)) {
+          val.forEach((item) => next.push(item));
+        }
+      } else {
+        next.push(val);
+      }
+    });
+
+    nodes = next;
+  });
+
+  return nodes;
+}
+
+// Validates keys and/or type for every matched node at path,
+// and optionally validates nested children relative to that node.
+function assertPath(body, path, rule) {
+  const { keys = [], type, children } = rule || {};
+  const nodes = getNodesAtPath(body, path);
+
+  nodes.forEach((node, i) => {
+    if (type) {
+      test(`"${path}"[${i}] is of type "${type}"`, function () {
+        // primitives: typeof; objects/arrays gesondert
+        if (type === 'array') expect(Array.isArray(node)).to.be.true;
+        else if (type === 'object') expect(node).to.be.an('object');
+        else expect(typeof node).to.equal(type);
+      });
+    }
+    if (keys.length) {
+      test(`"${path}"[${i}] has required keys`, function () {
+        expect(node).to.be.an('object');
+        keys.forEach((k) => expect(node, `Missing key "${k}" at ${path}[${i}]`).to.have.property(k));
+      });
+    }
+    if (children) {
+      Object.entries(children).forEach(([childPath, childRule]) => {
+        // childPath ist relativ zum aktuellen node, z.B. "entries[]" oder "asset[]"
+        assertPath(node, childPath, childRule);
+      });
+    }
+  });
+}
+
+// Public API: pass a schema (map path -> rule)
+function isValidNestedByPaths(schema) {
+  const body = res.getBody();
+  Object.entries(schema).forEach(([path, rule]) => assertPath(body, path, rule));
+}
+
+
 module.exports = {
   isValidDataResp,
   isValidNestedDataResp,
@@ -167,4 +240,5 @@ module.exports = {
   isValidAllDefaultFieldsResp,
   isValidMaxFieldSettingStructure,
   isValidAllRoutesResp,
+  isValidNestedByPaths,
 }

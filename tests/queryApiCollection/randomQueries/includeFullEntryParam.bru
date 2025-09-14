@@ -1,0 +1,50 @@
+meta {
+  name: Include Full Entry Param
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}?elementType=entries&id=48&fields=*&includeFullEntry=1&one=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  elementType: entries
+  id: 48
+  fields: *
+  includeFullEntry: 1
+  one: 1
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const helper = require('./tests');
+  const homeEntryKeys = ['metadata', 'sectionHandle', 'title', 'asset', 'selectAuthor', 'plainText', 'contentBuilder']
+  helper.isValidNestedByPaths({
+    'categories[]': {
+      keys: ['metadata', 'title', 'slug', 'uri'],
+      children: {
+        'entries[]': { keys: homeEntryKeys }
+      }
+    },
+    'contentBlock': {
+      keys: ['richtext', 'matrix', 'singleMatrix'],
+      children: {
+        'singleMatrix.entries[]': { keys: homeEntryKeys }
+      }
+    },
+    'entries[]': { 
+      keys: homeEntryKeys 
+    },
+  });
+  
+}
+
+settings {
+  encodeUrl: true
+}

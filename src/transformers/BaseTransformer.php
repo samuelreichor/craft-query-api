@@ -30,12 +30,11 @@ use yii\base\InvalidConfigException;
 abstract class BaseTransformer extends Component
 {
     protected ElementInterface $element;
+    public bool $includeFullEntry = false;
     public const EVENT_REGISTER_FIELD_TRANSFORMERS = 'registerTransformers';
     public array|null $predefinedFields = [];
     private array $customTransformers = [];
-
     private array $excludeFieldClasses;
-
     private bool $includeAll = false;
 
     public function __construct(ElementInterface $element)
@@ -78,7 +77,6 @@ abstract class BaseTransformer extends Component
         $fieldLayout = $this->element->getFieldLayout();
         $fieldElements = array_merge($fieldLayout->getElementsByType(BaseField::class), $fieldLayout->getElementsByType(CustomField::class));
         $transformedFields = [];
-        $forceEnableFullEntriesResponse = false;
         foreach ($fieldElements as $field) {
             $fieldClass = get_class($field);
 
@@ -106,7 +104,7 @@ abstract class BaseTransformer extends Component
             $isSingleRelation = Utils::isSingleRelationField($field);
             try {
                 $fieldValue = $this->element->getFieldValue($fieldHandle);
-                $transformedFields[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass, $forceEnableFullEntriesResponse);
+                $transformedFields[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass);
             } catch (InvalidFieldException) {
                 // handle native fields
                 $fieldValue = $this->element->$fieldHandle;
@@ -126,7 +124,7 @@ abstract class BaseTransformer extends Component
      * @throws InvalidFieldException|InvalidConfigException
      * @throws ImageTransformException
      */
-    protected function transformCustomField(mixed $fieldValue, string $fieldClass, bool $forceEnableFullEntriesResponse): mixed
+    protected function transformCustomField(mixed $fieldValue, string $fieldClass): mixed
     {
         if (!$fieldValue || !$fieldClass) {
             return null;
@@ -160,7 +158,7 @@ abstract class BaseTransformer extends Component
             Color::class => $this->transformColor($fieldValue),
             'craft\fields\ContentBlock' => $this->transformContentBlock($fieldValue),
             Country::class => $this->transformCountry($fieldValue),
-            Entries::class => $this->transformEntries($fieldValue->all(), $forceEnableFullEntriesResponse),
+            Entries::class => $this->transformEntries($fieldValue->all()),
             Icon::class => $this->transformIcon($fieldValue),
             Matrix::class => $this->transformMatrixField($fieldValue->all()),
             Link::class => $this->transformLinks($fieldValue),
@@ -186,6 +184,8 @@ abstract class BaseTransformer extends Component
         switch ($fieldClass) {
             case 'craft\fieldlayoutelements\users\PhotoField':
                 $assetTransformer = new AssetTransformer($fieldValue);
+                // Inherit includeFullEntry for nested transformers
+                $assetTransformer->includeFullEntry = $this->includeFullEntry;
                 return $assetTransformer->getTransformedData();
 
             default:
@@ -283,6 +283,8 @@ abstract class BaseTransformer extends Component
         $transformedData = [];
         foreach ($assets as $asset) {
             $assetTransformer = new AssetTransformer($asset);
+            // Inherit includeFullEntry for nested transformers
+            $assetTransformer->includeFullEntry = $this->includeFullEntry;
             $transformedData[] = $assetTransformer->getTransformedData();
         }
         return $transformedData;
@@ -294,12 +296,14 @@ abstract class BaseTransformer extends Component
      * @param array $entries
      * @return array
      */
-    protected function transformEntries(array $entries, bool $forceFullResponse = false): array
+    protected function transformEntries(array $entries): array
     {
         $transformedData = [];
         foreach ($entries as $entry) {
-            if ($forceFullResponse) {
+            if ($this->includeFullEntry) {
                 $entryTransformer = new EntryTransformer($entry);
+                // Inherit includeFullEntry for nested transformers
+                $entryTransformer->includeFullEntry = $this->includeFullEntry;
                 $transformedData[] = $entryTransformer->getTransformedData();
             } else {
                 $transformedData[] = [
@@ -324,6 +328,8 @@ abstract class BaseTransformer extends Component
         $transformedData = [];
         foreach ($users as $user) {
             $userTransformer = new UserTransformer($user);
+            // Inherit includeFullEntry for nested transformers
+            $userTransformer->includeFullEntry = $this->includeFullEntry;
             $transformedData[] = $userTransformer->getTransformedData();
         }
         return $transformedData;
@@ -340,6 +346,8 @@ abstract class BaseTransformer extends Component
         $transformedData = [];
         foreach ($categories as $category) {
             $categoryTransformer = new CategoryTransformer($category);
+            // Inherit includeFullEntry for nested transformers
+            $categoryTransformer->includeFullEntry = $this->includeFullEntry;
             $transformedData[] = $categoryTransformer->getTransformedData();
         }
         return $transformedData;
@@ -356,6 +364,8 @@ abstract class BaseTransformer extends Component
         $transformedData = [];
         foreach ($tags as $tag) {
             $tagTransformer = new TagTransformer($tag);
+            // Inherit includeFullEntry for nested transformers
+            $tagTransformer->includeFullEntry = $this->includeFullEntry;
             $transformedData[] = $tagTransformer->getTransformedData();
         }
         return $transformedData;
@@ -399,6 +409,8 @@ abstract class BaseTransformer extends Component
         $transformedData = [];
         foreach ($addresses as $address) {
             $addressTransformer = new AddressTransformer($address);
+            // Inherit includeFullEntry for nested transformers
+            $addressTransformer->includeFullEntry = $this->includeFullEntry;
             $transformedData[] = $addressTransformer->getTransformedData();
         }
         return $transformedData;
@@ -477,14 +489,14 @@ abstract class BaseTransformer extends Component
      * @throws InvalidFieldException
      * @throws ImageTransformException
      */
-    protected function getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass, bool $forceEnableFullEntriesResponse = false)
+    protected function getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass)
     {
         if ($isSingleRelation) {
-            $transformedValue = $this->transformCustomField($fieldValue, $fieldClass, $forceEnableFullEntriesResponse);
+            $transformedValue = $this->transformCustomField($fieldValue, $fieldClass);
             return is_array($transformedValue) && !empty($transformedValue) ? $transformedValue[0] : null;
         }
 
-        return $this->transformCustomField($fieldValue, $fieldClass, $forceEnableFullEntriesResponse);
+        return $this->transformCustomField($fieldValue, $fieldClass);
     }
 
     protected function getExcludedFieldClasses(): array
@@ -611,7 +623,7 @@ abstract class BaseTransformer extends Component
         }
 
         // Numeric array (list) -> apply Pick mode per item
-        return array_map(function ($item) use ($tree) {
+        return array_map(function($item) use ($tree) {
             return $this->pickOnly($item, $tree);
         }, $data);
     }

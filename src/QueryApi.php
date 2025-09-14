@@ -3,7 +3,6 @@
 namespace samuelreichoer\queryapi;
 
 use Craft;
-use craft\base\Model;
 use craft\base\Plugin;
 use craft\events\RegisterCacheOptionsEvent;
 use craft\events\RegisterUrlRulesEvent;
