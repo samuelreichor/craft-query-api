@@ -45,6 +45,7 @@ class QueryApi extends Plugin
      * @var ?QueryApi
      */
     public static ?QueryApi $plugin;
+    private bool|null|Settings $_settings;
 
     public static function config(): array
     {
@@ -117,9 +118,18 @@ class QueryApi extends Plugin
         ]);
     }
 
-    protected function createSettingsModel(): ?Model
+    protected function createSettingsModel(): ?Settings
     {
         return new Settings();
+    }
+
+    public function getSettings(): ?Settings
+    {
+        if (!isset($this->_settings)) {
+            $this->_settings = $this->createSettingsModel() ?: false;
+        }
+
+        return $this->_settings ?: null;
     }
 
     private function _initLogger(): void
