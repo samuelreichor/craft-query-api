@@ -1,10 +1,20 @@
 # Release Notes for Craft Query API
 
-## 3.3.0 - 2025-09-xx
+## 3.3.0 - 2025-09-14
 
 ### Added
 
-- Add enhancements to the .fields() property. It's possible now to filter the response with dot notation (entries.fieldHandle).
+- Add enhancements to the `fields` property. It's now possible to filter the response with dot notation (entries.fieldHandle).
+- Add new `*` wildcard to the `fields` property. This enables filtering of nested elements, while including everything else.
+- Add new `includeFullEntry()` property. If this is true, related entries through the entries field get included in the response.
+- Add new `includeFullEntry` setting. Globally disable or enable this property with the queryApi.php config.
+
+## Fixed
+- Fixed an issue with the serialization error handling of nested arrays.
+- Fixed type issues of plugin settings.
+
+## Changed
+- Simplify matrix/content block base transformer.
 
 ## 3.2.1 - 2025-09-07
 
