@@ -8,6 +8,7 @@ use craft\elements\Category;
 use craft\elements\Entry;
 use craft\elements\Tag;
 use craft\elements\User;
+use craft\errors\ImageTransformException;
 use craft\errors\InvalidFieldException;
 use Exception;
 use samuelreichoer\queryapi\transformers\AddressTransformer;
@@ -23,6 +24,7 @@ class JsonTransformerService
 {
     private array $transformers;
     private ElementQueryService $elementQueryService;
+    public bool $isFullEntryData = false;
 
     public function __construct(ElementQueryService $elementQueryService)
     {
@@ -35,18 +37,26 @@ class JsonTransformerService
      *
      * @param array $arrResult
      * @param array $predefinedFields
+     * @param bool $fullEntryData
      * @return array
-     * @throws InvalidFieldException
+     * @throws ImageTransformException
      * @throws InvalidConfigException
+     * @throws InvalidFieldException
      * @throws Exception
      */
-    public function executeTransform(array $arrResult, array $predefinedFields = []): array
+    public function executeTransform(array $arrResult, array $predefinedFields = [], bool $fullEntryData = false): array
     {
-        return array_map(function($element) use ($predefinedFields) {
+        return array_map(function($element) use ($predefinedFields, $fullEntryData) {
             if (!$element) {
                 return [];
             }
             $transformer = $this->getTransformerForElement($element);
+
+            /**
+             * Set $includeFullEntry on transformer to enable access through inheritance on all transformers
+             * without introducing a breaking change.
+             */
+            $transformer->includeFullEntry = $fullEntryData;
             return $transformer->getTransformedData($predefinedFields);
         }, $arrResult);
     }
@@ -60,7 +70,6 @@ class JsonTransformerService
      */
     private function getTransformerForElement(mixed $element): BaseTransformer
     {
-
         // Register custom transformers for custom element types
         if (count($this->transformers) > 0) {
             $elementTypeHandle = get_class($element);

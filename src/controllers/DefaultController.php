@@ -69,6 +69,12 @@ class DefaultController extends Controller
             $predefinedFieldHandleArr = explode(',', $params['fields']);
         }
 
+        // Include Full Entry includes the full data of entries included through an entry field
+        $fullEntryData = QueryApi::getInstance()->getSettings()->includeFullEntry;
+        if (isset($params['includeFullEntry']) && $params['includeFullEntry']) {
+            $fullEntryData = $params['includeFullEntry'];
+        }
+
         // Transform all other comma seperated strings to array
         foreach ($params as $key => $value) {
             if (is_string($value) && str_contains($value, ',')) {
@@ -97,7 +103,7 @@ class DefaultController extends Controller
 
         // Instantiate the Transform Service and handle transforming different elementTypes
         $transformerService = new JsonTransformerService($queryService);
-        $transformedData = $transformerService->executeTransform($result, $predefinedFieldHandleArr);
+        $transformedData = $transformerService->executeTransform($result, $predefinedFieldHandleArr, $fullEntryData);
 
         $finalResult = $queryOne ? ($transformedData[0] ?? null) : $transformedData;
 

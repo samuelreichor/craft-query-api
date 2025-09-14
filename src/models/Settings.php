@@ -15,4 +15,6 @@ class Settings extends Model
      * Define field classes that should be excluded from the response.
      */
     public array $excludeFieldClasses = [];
+
+    public bool $includeFullEntry = false;
 }
