@@ -2,6 +2,7 @@
 
 namespace samuelreichoer\queryapi\helpers;
 
+use Craft;
 use InvalidArgumentException;
 
 class Typescript
@@ -69,5 +70,24 @@ class Typescript
         }
 
         return $type;
+    }
+
+    public static function getFieldHandleOrAttributeForField($field): string
+    {
+        if (property_exists($field, 'handle')) {
+            return $field->handle;
+        }
+
+        if (is_callable([$field, 'attribute'])) {
+            return $field->attribute();
+        }
+
+        if (property_exists($field, 'attribute')) {
+            return $field->attribute;
+        }
+
+        $className = get_class($field);
+        Craft::error("No attribute or field handle found for className: '{$className}'", 'queryApi');
+        return 'unknown';
     }
 }

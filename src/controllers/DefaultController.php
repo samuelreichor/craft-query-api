@@ -287,7 +287,7 @@ class DefaultController extends Controller
         return true;
     }
 
-    /*    public function actionGenerateTypes()
+    /*     public function actionGenerateTypes()
         {
             $code = QueryApi::getInstance()->typescript->getTypes();
 
@@ -297,5 +297,5 @@ class DefaultController extends Controller
                     'mimeType' => 'text/plain',
                     'inline' => true,
                 ]);
-        }*/
+        } */
 }

@@ -46,7 +46,6 @@ use samuelreichoer\queryapi\enums\AssetMode;
 use samuelreichoer\queryapi\events\RegisterTypeDefinitionEvent;
 use samuelreichoer\queryapi\helpers\AssetHelper;
 use samuelreichoer\queryapi\helpers\Typescript;
-use samuelreichoer\queryapi\helpers\Utils;
 use samuelreichoer\queryapi\QueryApi;
 
 class TypescriptService extends Component
@@ -58,6 +57,29 @@ class TypescriptService extends Component
     {
         parent::__construct();
         $this->registerCustomTypeDefinitions();
+    }
+
+    /**
+     * Generates the TypeScript definition file
+     *
+     * @param string $outputPathRaw The path to the output file can contain aliases
+     * @return bool True if the file was written successfully, false otherwise
+     */
+    public function generateTsFile(string $outputPathRaw): bool
+    {
+        $outputPath = Craft::getAlias($outputPathRaw);
+        $types = QueryApi::getInstance()->typescript->getTypes();
+
+        $dir = dirname($outputPath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
+
+        if (file_put_contents($outputPath, $types)) {
+            return true;
+        }
+
+        return false;
     }
 
     public function getTypes(): string
@@ -173,7 +195,7 @@ class TypescriptService extends Component
                 continue;
             }
 
-            $fieldHandle = $this->getFieldHandleOrAttribute($field);
+            $fieldHandle = Typescript::getFieldHandleOrAttributeForField($field);
 
             // Check for custom type definition
             foreach ($this->customTypeDefinitions as $definition) {
@@ -198,18 +220,19 @@ class TypescriptService extends Component
                     }
 
                     $tsFieldTypes[$fieldHandle] = $transformer->setTypeByField($field);
-                    // break out to pass matcher and prevent overwrites
+                    // break out to pass matcher and prevent overwriting
                     continue 2;
                 }
 
                 // staticTypeDefinition defines a fixed TypeScript type to assign without further logic
                 if (!empty($definition['staticTypeDefinition'])) {
                     $tsFieldTypes[$fieldHandle] = $definition['staticTypeDefinition'];
-                    // break out to pass matcher and prevent overwrites
+                    // break out to pass matcher and prevent overwriting
                     continue 2;
                 }
             }
 
+            /* type is deprecated, the alternative inputType is worthless because it's always null? */
             if (property_exists($field, 'type') && $field->type === 'text') {
                 $tsType = Typescript::modifyTypeByField($field, 'string');
             } else {
@@ -497,28 +520,9 @@ class TypescriptService extends Component
     protected function handleUnknownField($field): string
     {
         $className = get_class($field);
-        $handle = $this->getFieldHandleOrAttribute($field);
+        $handle = Typescript::getFieldHandleOrAttributeForField($field);
         Craft::error("Unknown field found while generating ts definition with field handle: '{$handle}' and className '{$className}'", 'queryApi');
         return 'any';
-    }
-
-    protected function getFieldHandleOrAttribute($field): string
-    {
-        if (property_exists($field, 'handle')) {
-            return $field->handle;
-        }
-
-        if (is_callable([$field, 'attribute'])) {
-            return $field->attribute();
-        }
-
-        if (property_exists($field, 'attribute')) {
-            return $field->attribute;
-        }
-
-        $className = get_class($field);
-        Craft::error("No attribute or field handle found for className: '{$className}'", 'queryApi');
-        return 'unknown';
     }
 
     protected function getHardTypes(): string
