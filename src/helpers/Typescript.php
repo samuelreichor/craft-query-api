@@ -40,7 +40,7 @@ class Typescript
         return implode("\n", $lines);
     }
 
-    protected static function quoteKeyIfNecessary(string $key): string
+    public static function quoteKeyIfNecessary(string $key): string
     {
         // If it matches a valid identifier (e.g. title, imageUrl), leave it unquoted
         if (preg_match('/^[a-zA-Z_$][a-zA-Z0-9_$]*$/', $key)) {
@@ -49,5 +49,25 @@ class Typescript
 
         // If it contains special characters, numbers first, spaces, etc., wrap it
         return "'" . $key . "'";
+    }
+
+    public static function modifyTypeByField($field, string $rawType): string
+    {
+        // rawType is, for example, CraftDateTime
+        $type = $rawType;
+
+        // type should be (CraftDateTime)[]
+        $isSingleRelation = Utils::isArrayField($field);
+        if ($isSingleRelation) {
+            $type = '(' . $type . ')[]';
+        }
+
+        // type should be CraftDateTime | null
+        $isRequiredField = Utils::isRequiredField($field);
+        if (!$isRequiredField) {
+            $type .= ' | null';
+        }
+
+        return $type;
     }
 }
