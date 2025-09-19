@@ -7,6 +7,7 @@ use craft\base\Plugin;
 use craft\events\RegisterCacheOptionsEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
+use craft\services\ProjectConfig;
 use craft\services\UserPermissions;
 use craft\utilities\ClearCaches;
 use craft\web\UrlManager;
@@ -76,6 +77,10 @@ class QueryApi extends Plugin
 
         if (Craft::$app->getRequest()->getIsSiteRequest()) {
             $this->_registerSiteRoutes();
+        }
+
+        if ($this->getSettings()->typeGenerationMode === $this->getSettings()::TYPESCRIPT_GENERATION_AUTO) {
+            $this->_registerAutoTsGeneration();
         }
     }
 
@@ -234,6 +239,18 @@ class QueryApi extends Plugin
             ->onAdd(Constants::PATH_SCHEMAS . '.{uid}', $this->_proxy('schema', 'handleChangedSchema'))
             ->onUpdate(Constants::PATH_SCHEMAS . '.{uid}', $this->_proxy('schema', 'handleChangedSchema'))
             ->onRemove(Constants::PATH_SCHEMAS . '.{uid}', $this->_proxy('schema', 'handleDeletedSchema'));
+    }
+
+    private function _registerAutoTsGeneration(): void
+    {
+        Event::on(ProjectConfig::class, ProjectConfig::EVENT_AFTER_WRITE_YAML_FILES, function() {
+            $outputPath = QueryApi::getInstance()->getSettings()->typeGenerationOutputPath;
+            if (!$outputPath) {
+                Craft::error("Failed to generate TypeScript definition, output path is empty.", 'queryApi');
+                return;
+            }
+            $this->typescript->generateTsFile($outputPath);
+        });
     }
 
     /**

@@ -22,7 +22,7 @@ class TypescriptController extends Controller
 
     public function actionGenerateTypes(): int
     {
-        $output = $this->output ?? '@root/queryApiTypes.ts';
+        $output = $this->output ?? QueryApi::getInstance()->getSettings()->typeGenerationOutputPath;
         if (QueryApi::getInstance()->typescript->generateTsFile($output)) {
             $this->stdout("✔ TypeScript file written to: $output\n", Console::FG_GREEN);
             return ExitCode::OK;
