@@ -173,7 +173,7 @@ class TypescriptService extends Component
                 continue;
             }
 
-            $fieldHandle = $field->handle ?? $field->attribute ?? 'unknown';
+            $fieldHandle = $this->getFieldHandleOrAttribute($field);
 
             // Check for custom type definition
             foreach ($this->customTypeDefinitions as $definition) {
@@ -211,29 +211,29 @@ class TypescriptService extends Component
             }
 
             if (property_exists($field, 'type') && $field->type === 'text') {
-                $tsType = $this->modifyTypeByField($field, 'string');
+                $tsType = Typescript::modifyTypeByField($field, 'string');
             } else {
                 $tsType = match ($fieldClass) {
-                    PlainText::class, Icon::class, Email::class, CountryCodeField::class, AltField::class, 'craft\ckeditor\Field' => $this->modifyTypeByField($field, 'string'), // @phpstan-ignore-line
-                    Range::class, Number::class => $this->modifyTypeByField($field, 'number'),
-                    Lightswitch::class => $this->modifyTypeByField($field, 'boolean'),
-                    Date::class, Time::class => $this->modifyTypeByField($field, 'CraftDateTime'),
-                    Color::class => $this->modifyTypeByField($field, 'CraftColor'),
-                    Country::class => $this->modifyTypeByField($field, 'CraftCountry'),
-                    Money::class => $this->modifyTypeByField($field, 'CraftMoney'),
-                    Link::class => $this->modifyTypeByField($field, 'CraftLink'),
-                    Json::class => $this->modifyTypeByField($field, 'CraftJson'),
-                    Tags::class => $this->modifyTypeByField($field, 'CraftTag'),
-                    Assets::class, PhotoField::class => $this->modifyTypeByField($field, 'CraftAsset'),
-                    Users::class => $this->modifyTypeByField($field, 'CraftUser'),
-                    Addresses::class => $this->modifyTypeByField($field, 'CraftAddress'),
-                    Entries::class => $this->modifyTypeByField($field, 'CraftEntryRelation'),
-                    Dropdown::class, RadioButtons::class, Checkboxes::class, MultiSelect::class, ButtonGroup::class => $this->modifyTypeByField($field, $this->getOptionTypeByField($field)),
-                    Matrix::class => $this->modifyTypeByField($field, $this->getEntryTypesByField($field)),
-                    Table::class => $this->modifyTypeByField($field, $this->getTableTypeByField($field)),
-                    Categories::class => $this->modifyTypeByField($field, $this->getCategoryTypeByField($field)),
-                    'craft\fields\ContentBlock' => $this->modifyTypeByField($field, $this->getContentTypeByField($field)), // @phpstan-ignore-line
-                    default => 'any',
+                    PlainText::class, Icon::class, Email::class, CountryCodeField::class, AltField::class, 'craft\ckeditor\Field' => Typescript::modifyTypeByField($field, 'string'), // @phpstan-ignore-line
+                    Range::class, Number::class => Typescript::modifyTypeByField($field, 'number'),
+                    Lightswitch::class => Typescript::modifyTypeByField($field, 'boolean'),
+                    Date::class, Time::class => Typescript::modifyTypeByField($field, 'CraftDateTime'),
+                    Color::class => Typescript::modifyTypeByField($field, 'CraftColor'),
+                    Country::class => Typescript::modifyTypeByField($field, 'CraftCountry'),
+                    Money::class => Typescript::modifyTypeByField($field, 'CraftMoney'),
+                    Link::class => Typescript::modifyTypeByField($field, 'CraftLink'),
+                    Json::class => Typescript::modifyTypeByField($field, 'CraftJson'),
+                    Tags::class => Typescript::modifyTypeByField($field, 'CraftTag'),
+                    Assets::class, PhotoField::class => Typescript::modifyTypeByField($field, 'CraftAsset'),
+                    Users::class => Typescript::modifyTypeByField($field, 'CraftUser'),
+                    Addresses::class => Typescript::modifyTypeByField($field, 'CraftAddress'),
+                    Entries::class => Typescript::modifyTypeByField($field, 'CraftEntryRelation'),
+                    Dropdown::class, RadioButtons::class, Checkboxes::class, MultiSelect::class, ButtonGroup::class => Typescript::modifyTypeByField($field, $this->getOptionTypeByField($field)),
+                    Matrix::class => Typescript::modifyTypeByField($field, $this->getEntryTypesByField($field)),
+                    Table::class => Typescript::modifyTypeByField($field, $this->getTableTypeByField($field)),
+                    Categories::class => Typescript::modifyTypeByField($field, $this->getCategoryTypeByField($field)),
+                    'craft\fields\ContentBlock' => Typescript::modifyTypeByField($field, $this->getContentTypeByField($field)), // @phpstan-ignore-line
+                    default => $this->handleUnknownField($field),
                 };
             }
 
@@ -241,26 +241,6 @@ class TypescriptService extends Component
         }
 
         return $tsFieldTypes;
-    }
-
-    protected function modifyTypeByField($field, string $rawType): string
-    {
-        // rawType is for example CraftDateTime
-        $type = $rawType;
-
-        // type should be (CraftDateTime)[]
-        $isSingleRelation = Utils::isArrayField($field);
-        if ($isSingleRelation) {
-            $type = '(' . $type . ')[]';
-        }
-
-        // type should be CraftDateTime | null
-        $isRequiredField = Utils::isRequiredField($field);
-        if (!$isRequiredField) {
-            $type .= ' | null';
-        }
-
-        return $type;
     }
 
     protected function getAssetType(): string
@@ -512,6 +492,33 @@ class TypescriptService extends Component
         }
 
         return Constants::EXCLUDED_FIELD_HANDLES;
+    }
+
+    protected function handleUnknownField($field): string
+    {
+        $className = get_class($field);
+        $handle = $this->getFieldHandleOrAttribute($field);
+        Craft::error("Unknown field found while generating ts definition with field handle: '{$handle}' and className '{$className}'", 'queryApi');
+        return 'any';
+    }
+
+    protected function getFieldHandleOrAttribute($field): string
+    {
+        if (property_exists($field, 'handle')) {
+            return $field->handle;
+        }
+
+        if (is_callable([$field, 'attribute'])) {
+            return $field->attribute();
+        }
+
+        if (property_exists($field, 'attribute')) {
+            return $field->attribute;
+        }
+
+        $className = get_class($field);
+        Craft::error("No attribute or field handle found for className: '{$className}'", 'queryApi');
+        return 'unknown';
     }
 
     protected function getHardTypes(): string
