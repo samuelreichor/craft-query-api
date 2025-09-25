@@ -1,5 +1,20 @@
 # Release Notes for Craft Query API
 
+## 3.4.0 - 2025-09-25
+
+### Added
+
+- Add `typeGenerationMode` setting, to enable automatic ts type generation after project config changes.
+- Add `typeGenerationOutputPath` setting, to set a default path for the automatic and manual ts type generation.
+- Add `modifyTypeByField` util, to make typing of custom fields easier.
+- Add `getFieldHandleOrAttributeForField` util, to make typing for custom fields easier.
+
+## Fixed
+- Fixed ts output for fields that have an attribute but not as a public property.
+
+## Changed
+- Make TypeScript controller more reusable
+
 ## 3.3.0 - 2025-09-14
 
 ### Added
