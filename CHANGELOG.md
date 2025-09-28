@@ -1,5 +1,18 @@
 # Release Notes for Craft Query API
 
+## 3.5.0 - 2025-09-28
+
+### Added
+
+- Add support for `relatedTo` entry queries.
+- Add support for `andRelatedTo` entry queries.
+- Add support for `notRelated` entry queries.
+- Add support for `andNotRelatedTo` entry queries.
+- Add generated fields to custom query response and ts types.
+
+### Fixed
+- Fixes caching issues in plugin development.
+
 ## 3.4.0 - 2025-09-25
 
 ### Added
@@ -9,10 +22,10 @@
 - Add `modifyTypeByField` util, to make typing of custom fields easier.
 - Add `getFieldHandleOrAttributeForField` util, to make typing for custom fields easier.
 
-## Fixed
+### Fixed
 - Fixed ts output for fields that have an attribute but not as a public property.
 
-## Changed
+### Changed
 - Make TypeScript controller more reusable
 
 ## 3.3.0 - 2025-09-14
@@ -24,11 +37,11 @@
 - Add new `includeFullEntry()` property. If this is true, related entries through the entries field get included in the response.
 - Add new `includeFullEntry` setting. Globally disable or enable this property with the queryApi.php config.
 
-## Fixed
+### Fixed
 - Fixed an issue with the serialization error handling of nested arrays.
 - Fixed type issues of plugin settings.
 
-## Changed
+### Changed
 - Simplify matrix/content block base transformer.
 
 ## 3.2.1 - 2025-09-07
