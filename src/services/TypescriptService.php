@@ -9,8 +9,6 @@ use craft\errors\FieldNotFoundException;
 use craft\fieldlayoutelements\addresses\AddressField;
 use craft\fieldlayoutelements\addresses\CountryCodeField;
 use craft\fieldlayoutelements\assets\AltField;
-use craft\fieldlayoutelements\BaseField;
-use craft\fieldlayoutelements\CustomField;
 use craft\fieldlayoutelements\entries\EntryTitleField;
 use craft\fieldlayoutelements\users\PhotoField;
 use craft\fields\Addresses;
@@ -45,6 +43,7 @@ use samuelreichoer\queryapi\Constants;
 use samuelreichoer\queryapi\enums\AssetMode;
 use samuelreichoer\queryapi\events\RegisterTypeDefinitionEvent;
 use samuelreichoer\queryapi\helpers\AssetHelper;
+use samuelreichoer\queryapi\helpers\Fields;
 use samuelreichoer\queryapi\helpers\Typescript;
 use samuelreichoer\queryapi\QueryApi;
 
@@ -162,9 +161,14 @@ class TypescriptService extends Component
 
     protected function getTypesByFieldLayout(FieldLayout $fieldLayout): array
     {
-        $fieldElements = array_merge($fieldLayout->getElementsByType(BaseField::class), $fieldLayout->getElementsByType(CustomField::class));
+        $fieldElements = Fields::getAllFieldElementsByLayout($fieldLayout);
         $tsFieldTypes = [];
         foreach ($fieldElements as $field) {
+            if (Fields::isGeneratedField($field)) {
+                $tsFieldTypes[Fields::getGeneratedFieldHandle($field)] = 'string';
+                continue;
+            }
+
             $fieldClass = get_class($field);
 
             // only include title type in entry types if the entry type actually has a title field.

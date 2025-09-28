@@ -137,6 +137,7 @@ function isValidAllDefaultFieldsResp(isArr = false) {
     tags: [['metadata', 'title', 'slug'], true],
     time: [['date', 'timezone'], false],
     users: [reqKeys.users, true],
+    generatedField: [[], false, 'string'],
   }
   isValidNestedDataResp(properties, true)
 }

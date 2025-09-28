@@ -248,6 +248,7 @@ export interface CraftEntryTypeDefaultFields {
     tags: (CraftTag)[] | null
     time: CraftDateTime | null
     users: (CraftUser)[] | null
+    generatedField: string
 }
 
 export interface CraftEntryTypeRelationalFieldsWithMaxSetting {
