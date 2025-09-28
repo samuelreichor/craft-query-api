@@ -511,10 +511,10 @@ class TypescriptService extends Component
     protected function getExcludedFieldClasses(): array
     {
         if (isset(QueryApi::getInstance()->getSettings()->excludeFieldClasses)) {
-            return array_merge(Constants::EXCLUDED_FIELD_HANDLES, QueryApi::getInstance()->getSettings()->excludeFieldClasses);
+            return array_merge(Constants::EXCLUDED_FIELD_CLASSES, QueryApi::getInstance()->getSettings()->excludeFieldClasses);
         }
 
-        return Constants::EXCLUDED_FIELD_HANDLES;
+        return Constants::EXCLUDED_FIELD_CLASSES;
     }
 
     protected function handleUnknownField($field): string
