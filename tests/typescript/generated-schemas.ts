@@ -423,6 +423,7 @@ export const craftEntryTypeDefaultFieldsSchema = z.object({
   tags: z.array(craftTagSchema).nullable(),
   time: craftDateTimeSchema.nullable(),
   users: z.array(craftUserSchema).nullable(),
+  generatedField: z.string(),
 });
 
 export const craftPageRelationalFieldsWithMaxSettingSchema =

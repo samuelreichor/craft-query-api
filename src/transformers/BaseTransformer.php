@@ -8,8 +8,6 @@ use craft\base\ElementInterface;
 use craft\errors\FieldNotFoundException;
 use craft\errors\ImageTransformException;
 use craft\errors\InvalidFieldException;
-use craft\fieldlayoutelements\BaseField;
-use craft\fieldlayoutelements\CustomField;
 use craft\fields\Addresses;
 use craft\fields\Assets;
 use craft\fields\Categories;
@@ -23,6 +21,7 @@ use craft\fields\Tags;
 use craft\fields\Users;
 use samuelreichoer\queryapi\Constants;
 use samuelreichoer\queryapi\events\RegisterFieldTransformersEvent;
+use samuelreichoer\queryapi\helpers\Fields;
 use samuelreichoer\queryapi\helpers\Utils;
 use samuelreichoer\queryapi\QueryApi;
 use yii\base\InvalidConfigException;
@@ -74,13 +73,17 @@ abstract class BaseTransformer extends Component
     protected function getTransformedFields(array $predefinedFields = []): array
     {
         $this->prepAndSetPredefinedFields($predefinedFields);
-        $fieldLayout = $this->element->getFieldLayout();
-        $fieldElements = array_merge($fieldLayout->getElementsByType(BaseField::class), $fieldLayout->getElementsByType(CustomField::class));
+        $fieldElements = Fields::getAllFieldElementsByLayout($this->element->getFieldLayout());
         $transformedFields = [];
         foreach ($fieldElements as $field) {
-            $fieldClass = get_class($field);
+            // special case for generated Fields
+            if (Fields::isGeneratedField($field)) {
+                $this->handleGeneratedField($field, $transformedFields);
+                continue;
+            }
 
             // only custom fields have the getField() method
+            $fieldClass = get_class($field);
             if (method_exists($field, 'getField')) {
                 try {
                     $field = $field->getField();
@@ -113,6 +116,21 @@ abstract class BaseTransformer extends Component
         }
 
         return $this->filterByPredefinedFields($transformedFields, $this->predefinedFields);
+    }
+
+    protected function handleGeneratedField(array $field, array &$transformedFields): ?array
+    {
+        $fieldHandle = Fields::getGeneratedFieldHandle($field);
+        $fieldClass = Fields::getGeneratedFieldUid($field);
+
+        if ($this->element->canGetProperty($fieldHandle)) {
+            $value = $this->transformNativeField($this->element->$fieldHandle, $fieldClass);
+            $transformedFields[$fieldHandle] = $value;
+            return $transformedFields;
+        }
+
+        Craft::error('Generated Field has invalid handle: ' . $fieldHandle, 'queryApi');
+        return null;
     }
 
     /**
