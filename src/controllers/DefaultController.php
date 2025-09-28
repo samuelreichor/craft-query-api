@@ -88,12 +88,10 @@ class DefaultController extends Controller
                 'params' => $params,
             ]);
 
-        if (($result = Craft::$app->getCache()->get($cacheKey)) && $this->getIsCacheableRequest($request)) {
+        $duration = QueryApi::getInstance()->cache->getCacheDuration();
+        if ($duration > 0 && $this->getIsCacheableRequest($request) && ($result = Craft::$app->getCache()->get($cacheKey))) {
             return $this->asJson($result);
         }
-
-        // Set cache duration of config and fallback to general craft cache duration
-        $duration = QueryApi::getInstance()->cache->getCacheDuration();
 
         Craft::$app->getElements()->startCollectingCacheInfo();
 
