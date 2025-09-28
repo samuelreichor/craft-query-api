@@ -1,0 +1,27 @@
+meta {
+  name: Array with OR
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}?elementType=entries&relatedTo=%5B%22or%22%2C1519%2C1521%5D&all=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  elementType: entries
+  relatedTo: %5B%22or%22%2C1519%2C1521%5D
+  all: 1
+}
+
+tests {
+  const helper = require('./tests');
+  
+  helper.isCorrectRespByIds([1527, 1521, 1519])
+}
+
+settings {
+  encodeUrl: true
+}

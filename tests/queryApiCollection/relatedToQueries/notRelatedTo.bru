@@ -1,0 +1,28 @@
+meta {
+  name: notRelatedTo
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}?elementType=entries&relatedTo=1519&notRelatedTo=1521&all=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  elementType: entries
+  relatedTo: 1519
+  notRelatedTo: 1521
+  all: 1
+}
+
+tests {
+  const helper = require('./tests');
+  
+  helper.isCorrectRespByIds([1521])
+}
+
+settings {
+  encodeUrl: true
+}

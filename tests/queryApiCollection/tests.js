@@ -228,6 +228,21 @@ function isValidNestedByPaths(schema) {
   Object.entries(schema).forEach(([path, rule]) => assertPath(body, path, rule));
 }
 
+function isCorrectRespByIds(expectedIds) {
+  const resp = res.getBody();
+  const responseIds = resp.map(e => e.metadata.id).sort()
+  test(`${expectedIds.length} entries should be returned`, () => {
+    expect(responseIds.length).to.equal(expectedIds.length);
+  });
+
+  const responseIdSet = new Set(responseIds.map(String));
+  expectedIds.forEach(expectedId => {
+    test(`Should include "${expectedId}"`, () => {
+      expect(responseIdSet.has(String(expectedId)), `ID ${expectedId} is missing in response`).to.be.true;
+    });
+  });
+
+}
 
 module.exports = {
   isValidDataResp,
@@ -241,4 +256,5 @@ module.exports = {
   isValidMaxFieldSettingStructure,
   isValidAllRoutesResp,
   isValidNestedByPaths,
+  isCorrectRespByIds,
 }
