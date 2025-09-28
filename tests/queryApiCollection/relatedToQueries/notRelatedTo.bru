@@ -17,6 +17,12 @@ params:query {
   all: 1
 }
 
+tests {
+  const helper = require('./tests');
+  
+  helper.isCorrectRespByIds([1521])
+}
+
 settings {
   encodeUrl: true
 }
