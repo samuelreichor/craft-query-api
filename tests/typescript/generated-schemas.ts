@@ -223,6 +223,17 @@ export const craftTableTableSchema = z.object({
   col2Handle: z.string(),
 });
 
+export const craftEntryTypeRelationsSchema = z.object({
+  title: z.string(),
+  entries: z.array(craftEntryRelationSchema).nullable(),
+});
+
+export const craftPageRelationsSchema = craftEntryTypeRelationsSchema.extend({
+  metadata: craftEntryMetaSchema,
+  title: z.string(),
+  sectionHandle: z.string(),
+});
+
 export const craftCategoryBlogFiltersSchema = z.object({
   title: z.string(),
   plainText: z.string().nullable(),

@@ -261,6 +261,11 @@ export interface CraftEntryTypeRelationalFieldsWithMaxSetting {
     matrixMaxRelations: CraftEntryTypeRelationalFieldsWithMaxSetting | null
 }
 
+export interface CraftEntryTypeRelations {
+    title: string
+    entries: (CraftEntryRelation)[] | null
+}
+
 export interface CraftPageHome extends CraftEntryTypeHome {
     metadata: CraftEntryMeta
     title: string
@@ -274,6 +279,12 @@ export interface CraftPageDefaultFields extends CraftEntryTypeDefaultFields {
 }
 
 export interface CraftPageRelationalFieldsWithMaxSetting extends CraftEntryTypeRelationalFieldsWithMaxSetting {
+    metadata: CraftEntryMeta
+    title: string
+    sectionHandle: string
+}
+
+export interface CraftPageRelations extends CraftEntryTypeRelations {
     metadata: CraftEntryMeta
     title: string
     sectionHandle: string
