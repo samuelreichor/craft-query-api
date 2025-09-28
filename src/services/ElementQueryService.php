@@ -38,7 +38,7 @@ class ElementQueryService extends Component
     private array $allowedMethods = [
         'addresses' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'addressLine1', 'addressLine2', 'addressLine3', 'locality', 'organization', 'fullName'],
         'assets' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'volume', 'kind', 'filename', 'site', 'siteId'],
-        'entries' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'slug', 'uri', 'section', 'sectionId', 'postDate', 'site', 'siteId', 'level', 'type'],
+        'entries' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'slug', 'uri', 'section', 'sectionId', 'postDate', 'site', 'siteId', 'level', 'type', 'relatedTo', 'notRelatedTo', 'andRelatedTo', 'andNotRelatedTo'],
         'users' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'admin', 'group', 'groupId', 'email', 'fullName', 'hasPhoto'],
     ];
 
@@ -74,7 +74,7 @@ class ElementQueryService extends Component
         if (!Permissions::canQueryAllElement($elementType, $this->schema)) {
             foreach ($queriedDataArr as $queriedData) {
                 if ($queriedData) {
-                    $this->_validateDataPermission($queriedData, $elementType);
+                    $this->validateDataPermission($queriedData, $elementType);
                 }
             }
         }
@@ -98,9 +98,18 @@ class ElementQueryService extends Component
         }
 
         foreach ($params as $key => $value) {
-            if (in_array($key, $allowedMethods)) {
-                $query->$key($value);
+            if (!in_array($key, $allowedMethods)) {
+                continue;
             }
+
+            $decodedValue = urldecode($value);
+
+            $processedValue = match ($key) {
+                'relatedTo', 'notRelatedTo', 'andRelatedTo', 'andNotRelatedTo' => $this->buildRelatedToQuery($decodedValue),
+                default => $decodedValue
+            };
+
+            $query->$key($processedValue);
         }
 
         $eagerloadingMap = $this->getEagerLoadingMap();
@@ -130,7 +139,7 @@ class ElementQueryService extends Component
         $mapKey = [];
 
         foreach (Craft::$app->getFields()->getAllFields() as $field) {
-            if ($keys = $this->_getEagerLoadingMapForField($field)) {
+            if ($keys = $this->getEagerLoadingMapForField($field)) {
                 $mapKey[] = $keys;
             }
         }
@@ -148,7 +157,58 @@ class ElementQueryService extends Component
         return $this->customElementTypes;
     }
 
-    private function _getEagerLoadingMapForField(FieldInterface $field, ?string $prefix = null, int $iteration = 0): array
+    private function buildRelatedToQuery($value)
+    {
+        $jsonDecodedValue = json_decode($value, true);
+
+        // $value = 12
+        if (is_numeric($jsonDecodedValue)) {
+            return Entry::find()->id($jsonDecodedValue)->one();
+        }
+
+        // $value = [1]
+        // $value = ['and', 1, 2]
+        // $value = [1, ['tE' => 1, 'f' => 'handle']]
+        // $value = ['and', ['sE' => 1, 'sS' => 1], ['e' => 1, 'f' => 'handle'], 1]
+        if (is_array($jsonDecodedValue)) {
+            return $this->processRelatedToArray($jsonDecodedValue);
+        }
+
+        return null;
+    }
+
+    private function processRelatedToArray(array $array): array
+    {
+        $result = [];
+        $keyMap = [
+            'tE' => 'targetElement',
+            'sE' => 'sourceElement',
+            'e' => 'element',
+            'f' => 'field',
+            'sS' => 'sourceSite',
+        ];
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $result[$key] = $this->processRelatedToArray($value);
+            } elseif (is_string($key)) {
+                $mappedKey = $keyMap[$key] ?? $key;
+
+                if (in_array($mappedKey, ['targetElement', 'sourceElement', 'element']) && is_numeric($value)) {
+                    $result[$mappedKey] = Entry::find()->id($value)->one();
+                } else {
+                    $result[$mappedKey] = $value;
+                }
+            } elseif (is_numeric($value)) {
+                $result[$key] = Entry::find()->id($value)->one();
+            } else {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+    private function getEagerLoadingMapForField(FieldInterface $field, ?string $prefix = null, int $iteration = 0): array
     {
         $keys = [];
 
@@ -164,7 +224,7 @@ class ElementQueryService extends Component
 
             foreach ($field->getEntryTypes() as $entryType) {
                 foreach ($entryType->getCustomFields() as $subField) {
-                    $nestedKeys = $this->_getEagerLoadingMapForField($subField, $prefix . $field->handle . '.' . $entryType->handle . ':', $iteration);
+                    $nestedKeys = $this->getEagerLoadingMapForField($subField, $prefix . $field->handle . '.' . $entryType->handle . ':', $iteration);
 
                     if ($nestedKeys) {
                         $keys = array_merge($keys, $nestedKeys);
@@ -245,7 +305,7 @@ class ElementQueryService extends Component
     /**
      * @throws ForbiddenHttpException
      */
-    private function _validateDataPermission($data, $elementType): void
+    private function validateDataPermission($data, $elementType): void
     {
         switch ($elementType) {
             case 'addresses':
