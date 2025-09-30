@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}?elementType=entries&id=48&fields=asset.srcSets,asset.url,categories.entries&one=1
+  url: {{baseUrl}}?elementType=entries&id=48&fields=asset.srcSets%2Casset.url%2Ccategories.entries&one=1
   body: none
   auth: inherit
 }
@@ -13,7 +13,7 @@ get {
 params:query {
   elementType: entries
   id: 48
-  fields: asset.srcSets,asset.url,categories.entries
+  fields: asset.srcSets%2Casset.url%2Ccategories.entries
   one: 1
 }
 
