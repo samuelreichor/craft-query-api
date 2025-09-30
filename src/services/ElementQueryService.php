@@ -102,11 +102,9 @@ class ElementQueryService extends Component
                 continue;
             }
 
-            $decodedValue = urldecode($value);
-
             $processedValue = match ($key) {
-                'relatedTo', 'notRelatedTo', 'andRelatedTo', 'andNotRelatedTo' => $this->buildRelatedToQuery($decodedValue),
-                default => $decodedValue
+                'relatedTo', 'notRelatedTo', 'andRelatedTo', 'andNotRelatedTo' => $this->buildRelatedToQuery($value),
+                default => str_contains($value, ',') ? explode(',', $value) : $value,
             };
 
             $query->$key($processedValue);

@@ -1,18 +1,18 @@
 meta {
-  name: Numeric
+  name: Array with ,
   type: http
-  seq: 1
+  seq: 8
 }
 
 get {
-  url: {{baseUrl}}?elementType=entries&relatedTo=1519&all=1
+  url: {{baseUrl}}?elementType=entries&id=1527,1521,1519&all=1
   body: none
   auth: inherit
 }
 
 params:query {
   elementType: entries
-  relatedTo: 1519
+  id: 1527,1521,1519
   all: 1
 }
 
@@ -23,7 +23,7 @@ assert {
 tests {
   const helper = require('./tests');
   
-  helper.isCorrectRespByIds([1527, 1521])
+  helper.isCorrectRespByIds([1527, 1521, 1519])
 }
 
 settings {

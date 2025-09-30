@@ -16,9 +16,13 @@ params:query {
   all: 1
 }
 
+assert {
+  res.status: eq 200
+}
+
 tests {
   const helper = require('./tests');
-  
+
   helper.isCorrectRespByIds([1527, 1521, 1519])
 }
 

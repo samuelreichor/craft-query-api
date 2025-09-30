@@ -66,7 +66,7 @@ class DefaultController extends Controller
         // Transform string of field handles to array
         $predefinedFieldHandleArr = [];
         if (isset($params['fields']) && $params['fields']) {
-            $predefinedFieldHandleArr = explode(',', $params['fields']);
+            $predefinedFieldHandleArr = explode(',', urldecode($params['fields']));
         }
 
         // Include Full Entry includes the full data of entries included through an entry field
@@ -77,8 +77,8 @@ class DefaultController extends Controller
 
         // Transform all other comma seperated strings to array
         foreach ($params as $key => $value) {
-            if (is_string($value) && str_contains($value, ',')) {
-                $params[$key] = explode(',', $value);
+            if (is_string($value)) {
+                $params[$key] = urldecode($value);
             }
         }
 
