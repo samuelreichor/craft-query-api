@@ -1,5 +1,17 @@
 # Release Notes for Craft Query API
 
+## 3.5.1 - 2025-09-30
+
+### Fixed
+
+- Fixed urldecode/urlencode issues of custom get params. 
+
+### Changed
+
+- Adjust bruno api tests to encounter urldecode/urlencode issues.
+- Add extra assertions to relatedTo tests.
+- Add git workflow to prevent fixup commits in main.
+
 ## 3.5.0 - 2025-09-28
 
 ### Added
