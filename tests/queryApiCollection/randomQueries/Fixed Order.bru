@@ -1,0 +1,31 @@
+meta {
+  name: Fixed Order
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}?elementType=entries&id=1527,1521,1519,431,383,331&all=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  elementType: entries
+  id: 1527,1521,1519,431,383,331
+  all: 1
+}
+
+assert {
+  res.status: eq 200
+}
+
+tests {
+  const helper = require('./tests');
+  
+  helper.isCorrectIdOrderByIds([1527, 1521, 1519, 431, 383, 331])
+}
+
+settings {
+  encodeUrl: true
+}

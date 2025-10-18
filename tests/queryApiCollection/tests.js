@@ -245,6 +245,19 @@ function isCorrectRespByIds(expectedIds) {
 
 }
 
+function isCorrectIdOrderByIds(expectedIds) {
+  const resp = res.getBody();
+  const responseIds = resp.map(e => e.metadata.id);
+
+  test(`${expectedIds.length} entries should be returned`, () => {
+    expect(responseIds.length).to.equal(expectedIds.length);
+  });
+
+  test('IDs should match expected order', () => {
+    expect(responseIds).to.deep.equal(expectedIds);
+  });
+}
+
 module.exports = {
   isValidDataResp,
   isValidNestedDataResp,
@@ -258,4 +271,5 @@ module.exports = {
   isValidAllRoutesResp,
   isValidNestedByPaths,
   isCorrectRespByIds,
+  isCorrectIdOrderByIds,
 }

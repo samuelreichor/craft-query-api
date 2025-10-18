@@ -1,5 +1,18 @@
 # Release Notes for Craft Query API
 
+## 3.6.0 - 2025-10-18
+
+### Added
+
+- Add support for `fixedOrder()` for entries.
+- Add support for `fixedOrder()` for assets.
+- Add support for `fixedOrder()` for users.
+- Add support for `fixedOrder()` for addresses.
+
+### Fixed
+
+- Maintain consistent order of TypeScript definitions. 
+
 ## 3.5.1 - 2025-09-30
 
 ### Fixed
