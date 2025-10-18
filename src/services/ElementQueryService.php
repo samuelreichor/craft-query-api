@@ -36,10 +36,10 @@ class ElementQueryService extends Component
     ];
 
     private array $allowedMethods = [
-        'addresses' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'addressLine1', 'addressLine2', 'addressLine3', 'locality', 'organization', 'fullName'],
-        'assets' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'volume', 'kind', 'filename', 'site', 'siteId'],
-        'entries' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'slug', 'uri', 'section', 'sectionId', 'postDate', 'site', 'siteId', 'level', 'type', 'relatedTo', 'notRelatedTo', 'andRelatedTo', 'andNotRelatedTo'],
-        'users' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'admin', 'group', 'groupId', 'email', 'fullName', 'hasPhoto'],
+        'addresses' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'addressLine1', 'addressLine2', 'addressLine3', 'locality', 'organization', 'fullName', 'fixedOrder'],
+        'assets' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'volume', 'kind', 'filename', 'site', 'siteId', 'fixedOrder'],
+        'entries' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'slug', 'uri', 'section', 'sectionId', 'postDate', 'site', 'siteId', 'level', 'type', 'relatedTo', 'notRelatedTo', 'andRelatedTo', 'andNotRelatedTo', 'fixedOrder'],
+        'users' => ['limit', 'id', 'status', 'offset', 'orderBy', 'search', 'admin', 'group', 'groupId', 'email', 'fullName', 'hasPhoto', 'fixedOrder'],
     ];
 
     /**
@@ -92,9 +92,14 @@ class ElementQueryService extends Component
         $allowedMethods = $this->getAllowedMethods($elementType);
         $query = $this->elementTypeMap[$elementType]::find();
 
-        // makes sure that only entries with a section can get queried
+        // makes sure that only entries with a section (not nested entries) can get queried by default
         if ($elementType === 'entries') {
             $query->section('*');
+        }
+
+        // if id exists, return elements in the same order as the ids are (can be overwritten with the fixedOrder param)
+        if (key_exists('id', $params)) {
+            $query->fixedOrder(true);
         }
 
         foreach ($params as $key => $value) {
