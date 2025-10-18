@@ -46,10 +46,12 @@ use samuelreichoer\queryapi\helpers\AssetHelper;
 use samuelreichoer\queryapi\helpers\Fields;
 use samuelreichoer\queryapi\helpers\Typescript;
 use samuelreichoer\queryapi\QueryApi;
+use yii\helpers\ArrayHelper;
 
 class TypescriptService extends Component
 {
     public const EVENT_REGISTER_TYPE_DEFINITIONS = 'registerTypeDefinitions';
+
     private array $customTypeDefinitions = [];
 
     public function __construct()
@@ -343,6 +345,7 @@ class TypescriptService extends Component
         // If entry type used in matrix or elsewhere = CraftEntryType + Name
         // If entry type used in section = CraftEntryPage + Name
         $allEntryTypes = Craft::$app->entries->getAllEntryTypes();
+        ArrayHelper::multisort($allEntryTypes, 'handle', SORT_ASC); // guarantee stable order
         foreach ($allEntryTypes as $entryType) {
             $typeName = 'CraftEntryType' . StringHelper::toPascalCase($entryType->handle);
             $fieldTypes = $this->getTypesByFieldLayout($entryType->getFieldLayout());
@@ -351,6 +354,7 @@ class TypescriptService extends Component
 
         $generatedEntryPageTypes = [];
         $allSections = Craft::$app->entries->getAllSections();
+        ArrayHelper::multisort($allSections, 'handle', SORT_ASC);
 
         foreach ($allSections as $section) {
             foreach ($section->getEntryTypes() as $entryType) {
@@ -439,6 +443,7 @@ class TypescriptService extends Component
     {
         $ts = '';
         $allCategoryGroups = Craft::$app->categories->getAllGroups();
+        ArrayHelper::multisort($allCategoryGroups, 'handle', SORT_ASC);
         foreach ($allCategoryGroups as $group) {
             $handle = StringHelper::toPascalCase($group->handle);
             $typeName = 'CraftCategory' . $handle;

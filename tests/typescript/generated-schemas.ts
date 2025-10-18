@@ -178,19 +178,6 @@ export const craftAssetSchema = z.union([
   craftVolumeGraphicsSchema,
 ]);
 
-export const craftEntryTypeImageTextSchema = z.object({
-  asset: z.array(craftAssetSchema).nullable(),
-  plainText: z.string().nullable(),
-});
-
-export const dynamicHardTypeSchema = z.array(z.record(z.any()));
-
-export const craftEntryTypeLinkSchema = z.object({
-  linkText: z.string().nullable(),
-  openInNewTab: z.boolean().nullable(),
-  linkField: craftLinkSchema.nullable(),
-});
-
 export const craftUserSchema = z.object({
   metadata: craftUserMetaSchema,
   username: z.string().nullable(),
@@ -200,20 +187,15 @@ export const craftUserSchema = z.object({
   address: z.array(craftAddressSchema).nullable(),
 });
 
-export const craftEntryTypeAuthorSchema = z.object({
-  selectAuthor: z.array(craftUserSchema).nullable(),
-  address: z.array(craftAddressSchema).nullable(),
-  linkField: craftLinkSchema.nullable(),
-});
-
-export const craftEntryTypeHyperLinkSchema = z.object({
-  hyperField: dynamicHardTypeSchema,
-});
-
 export const craftCategoryNewsFilterSchema = z.object({
   title: z.string(),
   entries: z.array(craftEntryRelationSchema).nullable(),
   selectAuthor: z.array(craftUserSchema).nullable(),
+});
+
+export const craftEntryTypeImageTextSchema = z.object({
+  asset: z.array(craftAssetSchema).nullable(),
+  plainText: z.string().nullable(),
 });
 
 export const craftTableTableSchema = z.object({
@@ -222,6 +204,25 @@ export const craftTableTableSchema = z.object({
   col2: z.string(),
   col2Handle: z.string(),
 });
+
+export const craftEntryTypeAuthorSchema = z.object({
+  selectAuthor: z.array(craftUserSchema).nullable(),
+  address: z.array(craftAddressSchema).nullable(),
+  linkField: craftLinkSchema.nullable(),
+});
+
+export const craftEntryTypeNewsTeaserSchema = z.object({
+  categories: z.array(craftCategoryNewsFilterSchema).nullable(),
+  newsTag: z.array(craftTagSchema).nullable(),
+});
+
+export const craftEntryTypeLinkSchema = z.object({
+  linkText: z.string().nullable(),
+  openInNewTab: z.boolean().nullable(),
+  linkField: craftLinkSchema.nullable(),
+});
+
+export const dynamicHardTypeSchema = z.array(z.record(z.any()));
 
 export const craftEntryTypeRelationsSchema = z.object({
   title: z.string(),
@@ -337,10 +338,30 @@ export const craftEntryTypeHeadlineSchema = z.object({
   headlineTag: craftOptionHeadlineTagSchema,
 });
 
-export const craftEntryTypeNewsTeaserSchema = z.object({
-  categories: z.array(craftCategoryNewsFilterSchema).nullable(),
-  newsTag: z.array(craftTagSchema).nullable(),
+export const craftContentBlockContentBlockSchema = z.object({
+  richtext: z.string().nullable(),
+  singleMatrix: craftEntryTypeCtaSchema.nullable(),
+  matrix: z
+    .array(
+      z.union([craftEntryTypeHeadlineSchema, craftEntryTypeImageTextSchema]),
+    )
+    .nullable(),
 });
+
+export const craftEntryTypeHyperLinkSchema = z.object({
+  hyperField: dynamicHardTypeSchema,
+});
+
+export const craftEntryTypeRelationalFieldsWithMaxSettingSchema: z.ZodObject<any, any, any> = z.object({
+            title: z.string(),
+            singleRelatedAddress: craftAddressSchema.nullable(),
+            singleRelatedAsset: craftAssetSchema.nullable(),
+            singleRelatedCategory: craftCategoryNewsFilterSchema.nullable(),
+            singleMatrix: craftEntryTypeCtaSchema.nullable(),
+            singleRelatedEntry: craftEntryRelationSchema.nullable(),
+            singleRelatedUser: craftUserSchema.nullable(),
+            matrixMaxRelations: z.lazy(() => craftEntryTypeRelationalFieldsWithMaxSettingSchema.nullable()),
+          });
 
 export const craftEntryTypeHomeSchema = z.object({
   title: z.string(),
@@ -361,33 +382,6 @@ export const craftEntryTypeHomeSchema = z.object({
     )
     .nullable(),
   cta: z.array(craftEntryTypeCtaSchema).nullable(),
-});
-
-export const craftContentBlockContentBlockSchema = z.object({
-  richtext: z.string().nullable(),
-  singleMatrix: craftEntryTypeCtaSchema.nullable(),
-  matrix: z
-    .array(
-      z.union([craftEntryTypeHeadlineSchema, craftEntryTypeImageTextSchema]),
-    )
-    .nullable(),
-});
-
-export const craftEntryTypeRelationalFieldsWithMaxSettingSchema: z.ZodObject<any, any, any> = z.object({
-            title: z.string(),
-            singleRelatedAddress: craftAddressSchema.nullable(),
-            singleRelatedAsset: craftAssetSchema.nullable(),
-            singleRelatedCategory: craftCategoryNewsFilterSchema.nullable(),
-            singleMatrix: craftEntryTypeCtaSchema.nullable(),
-            singleRelatedEntry: craftEntryRelationSchema.nullable(),
-            singleRelatedUser: craftUserSchema.nullable(),
-            matrixMaxRelations: z.lazy(() => craftEntryTypeRelationalFieldsWithMaxSettingSchema.nullable()),
-          });
-
-export const craftPageHomeSchema = craftEntryTypeHomeSchema.extend({
-  metadata: craftEntryMetaSchema,
-  title: z.string(),
-  sectionHandle: z.string(),
 });
 
 export const craftEntryTypeDefaultFieldsSchema = z.object({
@@ -432,6 +426,12 @@ export const craftPageRelationalFieldsWithMaxSettingSchema =
     title: z.string(),
     sectionHandle: z.string(),
   });
+
+export const craftPageHomeSchema = craftEntryTypeHomeSchema.extend({
+  metadata: craftEntryMetaSchema,
+  title: z.string(),
+  sectionHandle: z.string(),
+});
 
 export const craftPageDefaultFieldsSchema =
   craftEntryTypeDefaultFieldsSchema.extend({
