@@ -171,52 +171,17 @@ export type CraftVolumeGraphics = {
 export type CraftAsset = CraftVolumeImages | CraftVolumeGraphics
 
 // --- entryTypes ---
+export interface CraftEntryTypeAuthor {
+    selectAuthor: (CraftUser)[] | null
+    address: (CraftAddress)[] | null
+    linkField: CraftLink | null
+}
+
 export interface CraftEntryTypeCta {
     title: string
     headlineTag: CraftOptionHeadlineTag
     plainText: string | null
     entries: (CraftEntryRelation)[] | null
-}
-
-export interface CraftEntryTypeImageText {
-    asset: (CraftAsset)[] | null
-    plainText: string | null
-}
-
-export interface CraftEntryTypeHyperLink {
-    hyperField: DynamicHardType
-}
-
-export interface CraftEntryTypeLink {
-    linkText: string | null
-    openInNewTab: boolean | null
-    linkField: CraftLink | null
-}
-
-export interface CraftEntryTypeNewsTeaser {
-    categories: (CraftCategoryNewsFilter)[] | null
-    newsTag: (CraftTag)[] | null
-}
-
-export interface CraftEntryTypeHome {
-    title: string
-    asset: (CraftAsset)[] | null
-    selectAuthor: (CraftUser)[] | null
-    plainText: string | null
-    richtext: string | null
-    contentBuilder: (CraftEntryTypeAuthor | CraftEntryTypeHeadline | CraftEntryTypeImageText | CraftEntryTypeNewsTeaser | CraftEntryTypeLink | CraftEntryTypeHyperLink)[] | null
-    cta: (CraftEntryTypeCta)[] | null
-}
-
-export interface CraftEntryTypeHeadline {
-    title: string
-    headlineTag: CraftOptionHeadlineTag
-}
-
-export interface CraftEntryTypeAuthor {
-    selectAuthor: (CraftUser)[] | null
-    address: (CraftAddress)[] | null
-    linkField: CraftLink | null
 }
 
 export interface CraftEntryTypeDefaultFields {
@@ -249,6 +214,41 @@ export interface CraftEntryTypeDefaultFields {
     time: CraftDateTime | null
     users: (CraftUser)[] | null
     generatedField: string
+}
+
+export interface CraftEntryTypeHeadline {
+    title: string
+    headlineTag: CraftOptionHeadlineTag
+}
+
+export interface CraftEntryTypeHome {
+    title: string
+    asset: (CraftAsset)[] | null
+    selectAuthor: (CraftUser)[] | null
+    plainText: string | null
+    richtext: string | null
+    contentBuilder: (CraftEntryTypeAuthor | CraftEntryTypeHeadline | CraftEntryTypeImageText | CraftEntryTypeNewsTeaser | CraftEntryTypeLink | CraftEntryTypeHyperLink)[] | null
+    cta: (CraftEntryTypeCta)[] | null
+}
+
+export interface CraftEntryTypeHyperLink {
+    hyperField: DynamicHardType
+}
+
+export interface CraftEntryTypeImageText {
+    asset: (CraftAsset)[] | null
+    plainText: string | null
+}
+
+export interface CraftEntryTypeLink {
+    linkText: string | null
+    openInNewTab: boolean | null
+    linkField: CraftLink | null
+}
+
+export interface CraftEntryTypeNewsTeaser {
+    categories: (CraftCategoryNewsFilter)[] | null
+    newsTag: (CraftTag)[] | null
 }
 
 export interface CraftEntryTypeRelationalFieldsWithMaxSetting {

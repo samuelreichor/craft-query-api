@@ -13,6 +13,10 @@
 
 - Maintain consistent order of TypeScript definitions. 
 
+### Changed
+
+- Queries with the `id()` property, will now return the elements in the same order as the ids are.
+
 ## 3.5.1 - 2025-09-30
 
 ### Fixed
