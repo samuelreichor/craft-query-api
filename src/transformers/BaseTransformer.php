@@ -100,6 +100,11 @@ abstract class BaseTransformer extends Component
                 continue;
             }
 
+            // we don't need to process the full element if predefined fields is not empty and indludeAll is false.
+            if ($this->includeAll === false && !empty($this->predefinedFields) && !array_key_exists($fieldHandle, $this->predefinedFields)) {
+                continue;
+            }
+
             if (in_array($fieldClass, $this->excludeFieldClasses, true)) {
                 continue;
             }
@@ -121,6 +126,11 @@ abstract class BaseTransformer extends Component
     protected function handleGeneratedField(array $field, array &$transformedFields): ?array
     {
         $fieldHandle = Fields::getGeneratedFieldHandle($field);
+
+        if ($this->includeAll === false && !empty($this->predefinedFields) && !array_key_exists($fieldHandle, $this->predefinedFields)) {
+            return null;
+        }
+
         $fieldClass = Fields::getGeneratedFieldUid($field);
 
         if ($this->element->canGetProperty($fieldHandle)) {
