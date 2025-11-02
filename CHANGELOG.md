@@ -1,5 +1,11 @@
 # Release Notes for Craft Query API
 
+## 3.6.1 - 2025-11-02
+
+### Fixed
+- Add `hardPick` setting that lets you decide if you want to keep default data like metadata or sectionHandle in the responses when using the `fields()` methode.
+- Improved performance of JSON transformer by 85% by introducing a subtree logic.
+
 ## 3.6.0 - 2025-10-18
 
 ### Added
