@@ -36,11 +36,16 @@ abstract class BaseTransformer extends Component
     private array $excludeFieldClasses;
     private bool $includeAll = false;
 
+    private static array $fieldLayoutCache = [];
+    private static ?array $excludeFieldClassesCache = null;
+
     public function __construct(ElementInterface $element, array $predefinedFields = [])
     {
         parent::__construct();
         $this->element = $element;
-        $this->predefinedFields = $this->getPredefinedFields($predefinedFields);
+        $this->predefinedFields = $this->isFieldTree($predefinedFields)
+            ? $predefinedFields
+            : $this->getPredefinedFields($predefinedFields);
         $this->registerCustomTransformers();
         $this->excludeFieldClasses = $this->getExcludedFieldClasses();
     }
@@ -49,12 +54,10 @@ abstract class BaseTransformer extends Component
      * Transforms the element into an array.
      *
      * @return array
-     * @throws InvalidConfigException
-     * @throws InvalidFieldException
-     * @throws ImageTransformException
      */
     public function getTransformedData(): array
     {
+        return [];
     }
 
     /**
@@ -67,7 +70,14 @@ abstract class BaseTransformer extends Component
      */
     protected function getTransformedFields(): array
     {
-        $fieldElements = Fields::getAllFieldElementsByLayout($this->element->getFieldLayout());
+        $layoutId = $this->element->getFieldLayout()?->id;
+
+        if (!isset(self::$fieldLayoutCache[$layoutId])) {
+            self::$fieldLayoutCache[$layoutId] = Fields::getAllFieldElementsByLayout($this->element->getFieldLayout());
+        }
+
+        $fieldElements = self::$fieldLayoutCache[$layoutId];
+
         $transformedFields = [];
         foreach ($fieldElements as $field) {
             // special case for generated Fields
@@ -94,8 +104,8 @@ abstract class BaseTransformer extends Component
                 continue;
             }
 
-            // we don't need to process the full element if predefined fields is not empty and indludeAll is false.
-            if ($this->includeAll === false && !empty($this->predefinedFields) && !array_key_exists($fieldHandle, $this->predefinedFields)) {
+            // we don't need to process the full element if predefined fields is not empty
+            if (!empty($this->predefinedFields) && !array_key_exists($fieldHandle, $this->predefinedFields)) {
                 continue;
             }
 
@@ -104,9 +114,17 @@ abstract class BaseTransformer extends Component
             }
 
             $isSingleRelation = Utils::isSingleRelationField($field);
+
             try {
                 $fieldValue = $this->element->getFieldValue($fieldHandle);
-                $transformedFields[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass);
+                $subtree = $this->predefinedFields[$fieldHandle] ?? null;
+
+                $transformedFields[$fieldHandle] = $this->getTransformedCustomFieldData(
+                    $isSingleRelation,
+                    $fieldValue,
+                    $fieldClass,
+                    $subtree
+                );
             } catch (InvalidFieldException) {
                 // handle native fields
                 $fieldValue = $this->element->$fieldHandle;
@@ -142,11 +160,13 @@ abstract class BaseTransformer extends Component
      *
      * @param mixed $fieldValue
      * @param string $fieldClass
+     * @param array|null $subtree
      * @return mixed
-     * @throws InvalidFieldException|InvalidConfigException
      * @throws ImageTransformException
+     * @throws InvalidConfigException
+     * @throws InvalidFieldException
      */
-    protected function transformCustomField(mixed $fieldValue, string $fieldClass): mixed
+    protected function transformCustomField(mixed $fieldValue, string $fieldClass, ?array $subtree = null): mixed
     {
         if (!$fieldValue || !$fieldClass) {
             return null;
@@ -174,18 +194,18 @@ abstract class BaseTransformer extends Component
         }
 
         return match ($fieldClass) {
-            Addresses::class => $this->transformAddresses($fieldValue->all()),
-            Assets::class => $this->transformAssets($fieldValue->all()),
-            Categories::class => $this->transformCategories($fieldValue->all()),
+            Addresses::class => $this->transformAddresses($fieldValue->all(), $subtree),
+            Assets::class => $this->transformAssets($fieldValue->all(), $subtree),
+            Categories::class => $this->transformCategories($fieldValue->all(), $subtree),
             Color::class => $this->transformColor($fieldValue),
-            'craft\fields\ContentBlock' => $this->transformContentBlock($fieldValue),
+            'craft\fields\ContentBlock' => $this->transformContentBlock($fieldValue, $subtree),
             Country::class => $this->transformCountry($fieldValue),
-            Entries::class => $this->transformEntries($fieldValue->all()),
+            Entries::class => $this->transformEntries($fieldValue->all(), $subtree),
             Icon::class => $this->transformIcon($fieldValue),
-            Matrix::class => $this->transformMatrixField($fieldValue->all()),
+            Matrix::class => $this->transformMatrixField($fieldValue->all(), $subtree),
             Link::class => $this->transformLinks($fieldValue),
-            Tags::class => $this->transformTags($fieldValue->all()),
-            Users::class => $this->transformUsers($fieldValue->all()),
+            Tags::class => $this->transformTags($fieldValue->all(), $subtree),
+            Users::class => $this->transformUsers($fieldValue->all(), $subtree),
             default => $fieldValue,
         };
     }
@@ -230,15 +250,18 @@ abstract class BaseTransformer extends Component
      * Transforms a Matrix field.
      *
      * @param array $matrixFields
+     * @param array|null $subtree
      * @return array
-     * @throws InvalidFieldException|InvalidConfigException|ImageTransformException
+     * @throws ImageTransformException
+     * @throws InvalidConfigException
+     * @throws InvalidFieldException
      */
-    protected function transformMatrixField(array $matrixFields): array
+    protected function transformMatrixField(array $matrixFields, ?array $subtree = null): array
     {
         $transformedData = [];
 
         foreach ($matrixFields as $block) {
-            $blockData = $this->getBlockData($block);
+            $blockData = $this->getBlockData($block, $subtree);
             $blockData['type'] = $block->type->handle;
 
             if ($block->title) {
@@ -256,9 +279,9 @@ abstract class BaseTransformer extends Component
      * @throws ImageTransformException
      * @throws InvalidConfigException
      */
-    protected function transformContentBlock(mixed $block)
+    protected function transformContentBlock(mixed $block, ?array $subtree = null): array
     {
-        return $this->getBlockData($block);
+        return $this->getBlockData($block, $subtree);
     }
 
     /**
@@ -266,11 +289,15 @@ abstract class BaseTransformer extends Component
      * @throws InvalidConfigException
      * @throws ImageTransformException
      */
-    protected function getBlockData(mixed $block): array
+    protected function getBlockData(mixed $block, ?array $subtree = null): array
     {
         $blockData = [];
 
         foreach ($block->getFieldValues() as $fieldHandle => $fieldValue) {
+            if (!empty($subtree) && !array_key_exists($fieldHandle, $subtree)) {
+                continue;
+            }
+
             $field = $block->getFieldLayout()->getFieldByHandle($fieldHandle);
 
             $isSingleRelation = Utils::isSingleRelationField($field);
@@ -281,7 +308,8 @@ abstract class BaseTransformer extends Component
                 continue;
             }
 
-            $blockData[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass);
+            $fieldSubtree = $subtree[$fieldHandle] ?? null;
+            $blockData[$fieldHandle] = $this->getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass, $fieldSubtree);
         }
         return $blockData;
     }
@@ -293,11 +321,11 @@ abstract class BaseTransformer extends Component
      * @throws InvalidConfigException
      * @throws InvalidFieldException
      */
-    protected function transformAssets(array $assets): array
+    protected function transformAssets(array $assets, ?array $subtree = null): array
     {
         $transformedData = [];
         foreach ($assets as $asset) {
-            $assetTransformer = new AssetTransformer($asset);
+            $assetTransformer = new AssetTransformer($asset, $subtree ?? []);
             $this->inheritVars($assetTransformer);
             $transformedData[] = $assetTransformer->getTransformedData();
         }
@@ -308,14 +336,15 @@ abstract class BaseTransformer extends Component
      * Transforms an array of Entry elements.
      *
      * @param array $entries
+     * @param array|null $subtree
      * @return array
      */
-    protected function transformEntries(array $entries): array
+    protected function transformEntries(array $entries, ?array $subtree = null): array
     {
         $transformedData = [];
         foreach ($entries as $entry) {
             if ($this->includeFullEntry) {
-                $entryTransformer = new EntryTransformer($entry);
+                $entryTransformer = new EntryTransformer($entry, $subtree ?? []);
                 $this->inheritVars($entryTransformer);
                 $transformedData[] = $entryTransformer->getTransformedData();
             } else {
@@ -334,13 +363,14 @@ abstract class BaseTransformer extends Component
      * Transforms an array of User elements.
      *
      * @param array $users
+     * @param array|null $subtree
      * @return array
      */
-    protected function transformUsers(array $users): array
+    protected function transformUsers(array $users, ?array $subtree = null): array
     {
         $transformedData = [];
         foreach ($users as $user) {
-            $userTransformer = new UserTransformer($user);
+            $userTransformer = new UserTransformer($user, $subtree ?? []);
             $this->inheritVars($userTransformer);
             $transformedData[] = $userTransformer->getTransformedData();
         }
@@ -351,13 +381,14 @@ abstract class BaseTransformer extends Component
      * Transforms an array of Category elements.
      *
      * @param array $categories
+     * @param array|null $subtree
      * @return array
      */
-    protected function transformCategories(array $categories): array
+    protected function transformCategories(array $categories, ?array $subtree = null): array
     {
         $transformedData = [];
         foreach ($categories as $category) {
-            $categoryTransformer = new CategoryTransformer($category);
+            $categoryTransformer = new CategoryTransformer($category, $subtree ?? []);
             $this->inheritVars($categoryTransformer);
             $transformedData[] = $categoryTransformer->getTransformedData();
         }
@@ -368,13 +399,14 @@ abstract class BaseTransformer extends Component
      * Transforms an array of Tag elements.
      *
      * @param array $tags
+     * @param array|null $subtree
      * @return array
      */
-    protected function transformTags(array $tags): array
+    protected function transformTags(array $tags, ?array $subtree = null): array
     {
         $transformedData = [];
         foreach ($tags as $tag) {
-            $tagTransformer = new TagTransformer($tag);
+            $tagTransformer = new TagTransformer($tag, $subtree ?? []);
             $this->inheritVars($tagTransformer);
             $transformedData[] = $tagTransformer->getTransformedData();
         }
@@ -414,11 +446,11 @@ abstract class BaseTransformer extends Component
      * @param array $addresses
      * @return array
      */
-    protected function transformAddresses(array $addresses): array
+    protected function transformAddresses(array $addresses, ?array $subtree = null): array
     {
         $transformedData = [];
         foreach ($addresses as $address) {
-            $addressTransformer = new AddressTransformer($address);
+            $addressTransformer = new AddressTransformer($address, $subtree ?? []);
             $this->inheritVars($addressTransformer);
             $transformedData[] = $addressTransformer->getTransformedData();
         }
@@ -498,23 +530,41 @@ abstract class BaseTransformer extends Component
      * @throws InvalidFieldException
      * @throws ImageTransformException
      */
-    protected function getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass)
+    protected function getTransformedCustomFieldData($isSingleRelation, $fieldValue, $fieldClass, ?array $subtree = null)
     {
         if ($isSingleRelation) {
-            $transformedValue = $this->transformCustomField($fieldValue, $fieldClass);
+            $transformedValue = $this->transformCustomField($fieldValue, $fieldClass, $subtree);
             return is_array($transformedValue) && !empty($transformedValue) ? $transformedValue[0] : null;
         }
 
-        return $this->transformCustomField($fieldValue, $fieldClass);
+        return $this->transformCustomField($fieldValue, $fieldClass, $subtree);
     }
 
     protected function getExcludedFieldClasses(): array
     {
-        if (isset(QueryApi::getInstance()->getSettings()->excludeFieldClasses)) {
-            return array_merge(Constants::EXCLUDED_FIELD_CLASSES, QueryApi::getInstance()->getSettings()->excludeFieldClasses);
+        if (self::$excludeFieldClassesCache === null) {
+            if (isset(QueryApi::getInstance()->getSettings()->excludeFieldClasses)) {
+                self::$excludeFieldClassesCache = array_merge(
+                    Constants::EXCLUDED_FIELD_CLASSES,
+                    QueryApi::getInstance()->getSettings()->excludeFieldClasses
+                );
+            } else {
+                self::$excludeFieldClassesCache = Constants::EXCLUDED_FIELD_CLASSES;
+            }
         }
 
-        return Constants::EXCLUDED_FIELD_CLASSES;
+        return self::$excludeFieldClassesCache;
+    }
+
+    protected function isFieldTree(array $fields): bool
+    {
+        if (empty($fields)) {
+            return false;
+        }
+
+        // If first key is numeric, it's a list of paths
+        $firstKey = array_key_first($fields);
+        return !is_numeric($firstKey);
     }
 
     /**
@@ -536,6 +586,10 @@ abstract class BaseTransformer extends Component
         $tree = [];
 
         foreach ($predefinedFields as $path) {
+            if (!is_string($path)) {
+                continue;
+            }
+
             $path = trim($path);
 
             // If "*" is present -> mark includeAll, skip adding to tree
