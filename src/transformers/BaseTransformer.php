@@ -31,15 +31,16 @@ abstract class BaseTransformer extends Component
     protected ElementInterface $element;
     public bool $includeFullEntry = false;
     public const EVENT_REGISTER_FIELD_TRANSFORMERS = 'registerTransformers';
-    public array|null $predefinedFields = [];
+    public array $predefinedFields = [];
     private array $customTransformers = [];
     private array $excludeFieldClasses;
     private bool $includeAll = false;
 
-    public function __construct(ElementInterface $element)
+    public function __construct(ElementInterface $element, array $predefinedFields = [])
     {
         parent::__construct();
         $this->element = $element;
+        $this->predefinedFields = $this->getPredefinedFields($predefinedFields);
         $this->registerCustomTransformers();
         $this->excludeFieldClasses = $this->getExcludedFieldClasses();
     }
@@ -47,32 +48,25 @@ abstract class BaseTransformer extends Component
     /**
      * Transforms the element into an array.
      *
-     * @param array $predefinedFields
      * @return array
      * @throws InvalidConfigException
      * @throws InvalidFieldException
      * @throws ImageTransformException
      */
-    public function getTransformedData(array $predefinedFields = []): array
+    public function getTransformedData(): array
     {
-        $transformedFields = $this->getTransformedFields($predefinedFields);
-        $metadata = $this->getMetaData();
-
-        return array_merge($metadata, $transformedFields);
     }
 
     /**
      * Retrieves and transforms custom fields from the element.
      *
-     * @param array $predefinedFields
      * @return array
      * @throws InvalidConfigException
      * @throws InvalidFieldException
      * @throws ImageTransformException
      */
-    protected function getTransformedFields(array $predefinedFields = []): array
+    protected function getTransformedFields(): array
     {
-        $this->prepAndSetPredefinedFields($predefinedFields);
         $fieldElements = Fields::getAllFieldElementsByLayout($this->element->getFieldLayout());
         $transformedFields = [];
         foreach ($fieldElements as $field) {
@@ -120,7 +114,7 @@ abstract class BaseTransformer extends Component
             }
         }
 
-        return $this->filterByPredefinedFields($transformedFields, $this->predefinedFields);
+        return $transformedFields;
     }
 
     protected function handleGeneratedField(array $field, array &$transformedFields): ?array
@@ -212,8 +206,7 @@ abstract class BaseTransformer extends Component
         switch ($fieldClass) {
             case 'craft\fieldlayoutelements\users\PhotoField':
                 $assetTransformer = new AssetTransformer($fieldValue);
-                // Inherit includeFullEntry for nested transformers
-                $assetTransformer->includeFullEntry = $this->includeFullEntry;
+                $this->inheritVars($assetTransformer);
                 return $assetTransformer->getTransformedData();
 
             default:
@@ -305,8 +298,7 @@ abstract class BaseTransformer extends Component
         $transformedData = [];
         foreach ($assets as $asset) {
             $assetTransformer = new AssetTransformer($asset);
-            // Inherit includeFullEntry for nested transformers
-            $assetTransformer->includeFullEntry = $this->includeFullEntry;
+            $this->inheritVars($assetTransformer);
             $transformedData[] = $assetTransformer->getTransformedData();
         }
         return $transformedData;
@@ -324,8 +316,7 @@ abstract class BaseTransformer extends Component
         foreach ($entries as $entry) {
             if ($this->includeFullEntry) {
                 $entryTransformer = new EntryTransformer($entry);
-                // Inherit includeFullEntry for nested transformers
-                $entryTransformer->includeFullEntry = $this->includeFullEntry;
+                $this->inheritVars($entryTransformer);
                 $transformedData[] = $entryTransformer->getTransformedData();
             } else {
                 $transformedData[] = [
@@ -350,8 +341,7 @@ abstract class BaseTransformer extends Component
         $transformedData = [];
         foreach ($users as $user) {
             $userTransformer = new UserTransformer($user);
-            // Inherit includeFullEntry for nested transformers
-            $userTransformer->includeFullEntry = $this->includeFullEntry;
+            $this->inheritVars($userTransformer);
             $transformedData[] = $userTransformer->getTransformedData();
         }
         return $transformedData;
@@ -368,8 +358,7 @@ abstract class BaseTransformer extends Component
         $transformedData = [];
         foreach ($categories as $category) {
             $categoryTransformer = new CategoryTransformer($category);
-            // Inherit includeFullEntry for nested transformers
-            $categoryTransformer->includeFullEntry = $this->includeFullEntry;
+            $this->inheritVars($categoryTransformer);
             $transformedData[] = $categoryTransformer->getTransformedData();
         }
         return $transformedData;
@@ -386,8 +375,7 @@ abstract class BaseTransformer extends Component
         $transformedData = [];
         foreach ($tags as $tag) {
             $tagTransformer = new TagTransformer($tag);
-            // Inherit includeFullEntry for nested transformers
-            $tagTransformer->includeFullEntry = $this->includeFullEntry;
+            $this->inheritVars($tagTransformer);
             $transformedData[] = $tagTransformer->getTransformedData();
         }
         return $transformedData;
@@ -431,8 +419,7 @@ abstract class BaseTransformer extends Component
         $transformedData = [];
         foreach ($addresses as $address) {
             $addressTransformer = new AddressTransformer($address);
-            // Inherit includeFullEntry for nested transformers
-            $addressTransformer->includeFullEntry = $this->includeFullEntry;
+            $this->inheritVars($addressTransformer);
             $transformedData[] = $addressTransformer->getTransformedData();
         }
         return $transformedData;
@@ -540,7 +527,7 @@ abstract class BaseTransformer extends Component
      * Special case:
      *   '*' only sets includeAll=true, but is NOT added to the tree.
      */
-    protected function prepAndSetPredefinedFields(array $predefinedFields): void
+    protected function getPredefinedFields(array $predefinedFields): array
     {
         // Reset includeAll for every call
         $this->includeAll = false;
@@ -571,8 +558,7 @@ abstract class BaseTransformer extends Component
             unset($current);
         }
 
-        // Save prepared selection tree
-        $this->predefinedFields = $tree;
+        return $tree;
     }
 
     /**
@@ -587,7 +573,7 @@ abstract class BaseTransformer extends Component
      * @param array|null $tree The selection tree to apply
      * @return mixed The filtered data
      */
-    protected function filterByPredefinedFields($data, ?array $tree): mixed
+    protected function filterByPredefinedFields(mixed $data, ?array $tree): mixed
     {
         // Case 1: no tree and no includeAll -> always return data as-is
         if (empty($tree) && $this->includeAll === false) {
@@ -672,5 +658,46 @@ abstract class BaseTransformer extends Component
     protected function isAssoc(array $arr): bool
     {
         return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+
+    protected function smartFilter(array $data, array $defaultKeys): array
+    {
+        // If no filtering is needed, return original data
+        if (empty($this->predefinedFields)) {
+            return $data;
+        }
+
+        // If hard pick is enabled, no default keys are required and the whole data object gets filtered.
+        if (QueryApi::getInstance()->getSettings()->hardPick) {
+            return $this->filterByPredefinedFields($data, $this->predefinedFields);
+        }
+
+        // Separate default data from other data
+        $defaultData = array_intersect_key($data, array_flip($defaultKeys));
+        $otherData = array_diff_key($data, array_flip($defaultKeys));
+
+        // Filter "other" data based on fields that are NOT default fields
+        $otherTree = array_diff_key($this->predefinedFields, array_flip($defaultKeys));
+        $filteredOtherData = $this->filterByPredefinedFields($otherData, $otherTree);
+
+        // Handle default data: keep all of it, but filter parts that are in the tree
+        $finalDefaultData = [];
+        foreach ($defaultData as $key => $value) {
+            if (array_key_exists($key, $this->predefinedFields)) {
+                // If a default key is in the filter tree, filter it
+                $finalDefaultData[$key] = $this->filterByPredefinedFields($value, $this->predefinedFields[$key]);
+            } else {
+                // Otherwise, keep the default value as is
+                $finalDefaultData[$key] = $value;
+            }
+        }
+
+        // Always include default data, and merge filtered other data
+        return array_merge($finalDefaultData, $filteredOtherData);
+    }
+
+    protected function inheritVars($transformer): void
+    {
+        $transformer->includeFullEntry = $this->includeFullEntry;
     }
 }

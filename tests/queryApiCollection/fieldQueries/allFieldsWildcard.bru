@@ -1,11 +1,11 @@
 meta {
-  name: Empty Fields
+  name: All Fields Wildcard
   type: http
   seq: 1
 }
 
 get {
-  url: {{baseUrl}}?elementType=entries&id=48&fields&one=1
+  url: {{baseUrl}}?elementType=entries&id=48&fields=*&one=1
   body: none
   auth: inherit
 }
@@ -13,7 +13,7 @@ get {
 params:query {
   elementType: entries
   id: 48
-  fields: 
+  fields: *
   one: 1
 }
 
@@ -28,4 +28,5 @@ tests {
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

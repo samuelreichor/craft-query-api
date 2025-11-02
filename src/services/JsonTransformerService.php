@@ -50,14 +50,14 @@ class JsonTransformerService
             if (!$element) {
                 return [];
             }
-            $transformer = $this->getTransformerForElement($element);
+            $transformer = $this->getTransformerForElement($element, $predefinedFields);
 
             /**
              * Set $includeFullEntry on transformer to enable access through inheritance on all transformers
              * without introducing a breaking change.
              */
             $transformer->includeFullEntry = $fullEntryData;
-            return $transformer->getTransformedData($predefinedFields);
+            return $transformer->getTransformedData();
         }, $arrResult);
     }
 
@@ -68,24 +68,24 @@ class JsonTransformerService
      * @return BaseTransformer
      * @throws Exception
      */
-    private function getTransformerForElement(mixed $element): BaseTransformer
+    private function getTransformerForElement(mixed $element, array $predefinedFields): BaseTransformer
     {
         // Register custom transformers for custom element types
         if (count($this->transformers) > 0) {
             $elementTypeHandle = get_class($element);
             if (isset($this->transformers[$elementTypeHandle])) {
                 $transformerClass = $this->transformers[$elementTypeHandle];
-                return new $transformerClass($element);
+                return new $transformerClass($element, $predefinedFields);
             }
         }
 
         return match (true) {
-            $element instanceof Entry => new EntryTransformer($element),
-            $element instanceof Asset => new AssetTransformer($element),
-            $element instanceof User => new UserTransformer($element),
-            $element instanceof Address => new AddressTransformer($element),
-            $element instanceof Category => new CategoryTransformer($element),
-            $element instanceof Tag => new TagTransformer($element),
+            $element instanceof Entry => new EntryTransformer($element, $predefinedFields),
+            $element instanceof Asset => new AssetTransformer($element, $predefinedFields),
+            $element instanceof User => new UserTransformer($element, $predefinedFields),
+            $element instanceof Address => new AddressTransformer($element, $predefinedFields),
+            $element instanceof Category => new CategoryTransformer($element, $predefinedFields),
+            $element instanceof Tag => new TagTransformer($element, $predefinedFields),
             default => throw new Exception('Unsupported element type'),
         };
     }
