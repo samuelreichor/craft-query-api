@@ -12,22 +12,21 @@ class EntryTransformer extends BaseTransformer
 {
     protected Entry $entry;
 
-    public function __construct(Entry $entry)
+    public function __construct(Entry $entry, array $predefinedFields = [])
     {
-        parent::__construct($entry);
+        parent::__construct($entry, $predefinedFields);
         $this->entry = $entry;
     }
 
     /**
      * Transforms the Entry element into an array.
      *
-     * @param array $predefinedFields
      * @return array
      * @throws InvalidConfigException
      * @throws InvalidFieldException
      * @throws ImageTransformException
      */
-    public function getTransformedData(array $predefinedFields = []): array
+    public function getTransformedData(): array
     {
         $data = ['metadata' => $this->getMetaData()];
 
@@ -36,9 +35,11 @@ class EntryTransformer extends BaseTransformer
             $data['sectionHandle'] = $this->entry->section->handle;
         }
 
-        $transformedFields = $this->getTransformedFields($predefinedFields);
+        $defaultKeys = array_keys($data);
+        $transformedFields = $this->getTransformedFields();
+        $fullData = array_merge($data, $transformedFields);
 
-        return array_merge($data, $transformedFields);
+        return $this->smartFilter($fullData, $defaultKeys);
     }
 
     /**

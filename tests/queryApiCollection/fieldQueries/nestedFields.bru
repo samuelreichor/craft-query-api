@@ -1,11 +1,11 @@
 meta {
-  name: Random Fields
+  name: Nested Fields
   type: http
-  seq: 3
+  seq: 1
 }
 
 get {
-  url: {{baseUrl}}?elementType=entries&id=48&fields=address%2Casset&one=1
+  url: {{baseUrl}}?elementType=entries&id=48&fields=asset.srcSets%2Casset.url%2Ccategories.entries%2Cmetadata.id%2Cmetadata.entryType&one=1
   body: none
   auth: inherit
 }
@@ -13,7 +13,7 @@ get {
 params:query {
   elementType: entries
   id: 48
-  fields: address%2Casset
+  fields: asset.srcSets%2Casset.url%2Ccategories.entries%2Cmetadata.id%2Cmetadata.entryType
   one: 1
 }
 
@@ -26,8 +26,8 @@ tests {
   const properties = {
     metadata: [['id', 'entryType'], false],
     sectionHandle: [[], false, 'string'],
-    address: [['metadata', 'title'], true],
-    asset: [['metadata', 'height'], true],
+    asset: [['srcSets', 'url'], true],
+    categories: [['entries'], true]
   }
   
   helper.isValidNestedDataResp(properties)
@@ -35,4 +35,5 @@ tests {
 
 settings {
   encodeUrl: true
+  timeout: 0
 }

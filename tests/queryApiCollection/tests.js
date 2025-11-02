@@ -16,11 +16,27 @@ function isValidDataResp(keys, isArr = false) {
   });
 }
 
-function isValidNestedDataResp(reqKeys) {
+/**
+ * reqKeys: {
+ *   [topKey]: [keysToCheck:Array<string>, isArray:boolean, expectedType?: string]
+ * }
+ */
+function isValidNestedDataResp(reqKeys, options = {}) {
+  const { strictTopLevel = true, strictNested = false } = options;
   const body = res.getBody();
 
+  // 1) Strict Top-Level: exakt dieselben Keys wie reqKeys
+  test('Top-level keys should match exactly when strictTopLevel is enabled', function () {
+    if (!strictTopLevel) return;
+
+    const bodyKeys = Object.keys(body || {}).sort();
+    const expectedKeys = Object.keys(reqKeys || {}).sort();
+    expect(bodyKeys, `Top-level keys mismatch.\nExpected: ${expectedKeys.join(', ')}\nGot: ${bodyKeys.join(', ')}`)
+        .to.deep.equal(expectedKeys);
+  });
+
   Object.entries(reqKeys).forEach(([key, [keysToCheck, isArray, expectedType]]) => {
-    const nestedData = body[key];
+    const nestedData = body?.[key];
 
     test(`Property "${key}" should exist`, function () {
       expect(nestedData).to.not.be.undefined;
@@ -28,39 +44,74 @@ function isValidNestedDataResp(reqKeys) {
 
     test(`"${key}" should be ${isArray ? 'an array' : (keysToCheck.length ? 'an object' : 'a primitive')}`, function () {
       if (isArray) {
-        expect(Array.isArray(nestedData)).to.be.true;
+        expect(Array.isArray(nestedData), `"${key}" must be an array`).to.be.true;
 
         nestedData.forEach((item, i) => {
-          keysToCheck.forEach((innerKey) => {
-            expect(item, `Missing key "${innerKey}" in item ${i} of "${key}"`).to.have.property(innerKey);
-          });
+          if (keysToCheck.length === 0) {
+            // Array of primitives
+            const t = typeof item;
+            expect(t !== 'object' || item === null, `"${key}[${i}]" should be a primitive`).to.be.true;
+            if (expectedType) {
+              // Sonderfall null
+              if (expectedType === 'null') {
+                expect(item, `"${key}[${i}]" should be null`).to.equal(null);
+              } else {
+                expect(typeof item, `"${key}[${i}]" should be of type "${expectedType}"`).to.equal(expectedType);
+              }
+            }
+          } else {
+            expect(item, `"${key}[${i}]" should be an object`).to.be.an('object');
+
+            keysToCheck.forEach(innerKey => {
+              expect(item, `Missing key "${innerKey}" in item ${i} of "${key}"`).to.have.property(innerKey);
+            });
+
+            if (strictNested) {
+              const got = Object.keys(item).sort();
+              const expected = [...keysToCheck].sort();
+              expect(got, `Extra keys in "${key}[${i}]": ${got.filter(k => !expected.includes(k)).join(', ')}`)
+                  .to.deep.equal(expected);
+            }
+          }
         });
 
       } else {
         if (keysToCheck.length === 0) {
-          // Primitive Check mit optionaler Typprüfung
-          expect(typeof nestedData, `"${key}" should be of type "${expectedType}"`).to.not.equal('object');
+          const isPrimitive = (val) => (val === null) || (typeof val !== 'object');
+          expect(isPrimitive(nestedData), `"${key}" should be a primitive`).to.be.true;
 
           if (expectedType) {
-            expect(typeof nestedData, `"${key}" should be of type "${expectedType}"`).to.equal(expectedType);
+            if (expectedType === 'null') {
+              expect(nestedData, `"${key}" should be null`).to.equal(null);
+            } else {
+              expect(typeof nestedData, `"${key}" should be of type "${expectedType}"`).to.equal(expectedType);
+            }
           }
 
         } else {
-          expect(nestedData).to.be.an('object');
-          keysToCheck.forEach((innerKey) => {
-            expect(nestedData).to.have.property(innerKey);
+          expect(nestedData, `"${key}" should be an object`).to.be.an('object');
+
+          keysToCheck.forEach(innerKey => {
+            expect(nestedData, `Missing key "${innerKey}" in "${key}"`).to.have.property(innerKey);
           });
+
+          if (strictNested) {
+            const got = Object.keys(nestedData).sort();
+            const expected = [...keysToCheck].sort();
+            expect(got, `Extra keys in "${key}": ${got.filter(k => !expected.includes(k)).join(', ')}`)
+                .to.deep.equal(expected);
+          }
         }
       }
     });
   });
 }
 
+
 function assertAllRelationalFieldsAreObjects(obj, path = '') {
   Object.entries(obj).forEach(([key, value]) => {
     const fullPath = path ? `${path}.${key}` : key;
 
-    // Nur Keys, die mit "singleRelated", "singleMatrix", oder "matrixMaxRelations" beginnen
     const isRelational = /^singleRelated|^singleMatrix|^matrixMaxRelations/.test(key);
 
     if (isRelational) {
@@ -72,7 +123,6 @@ function assertAllRelationalFieldsAreObjects(obj, path = '') {
       });
     }
 
-    // Wenn value selbst ein Objekt ist, tiefer prüfen
     if (value && typeof value === 'object' && !Array.isArray(value)) {
       assertAllRelationalFieldsAreObjects(value, fullPath);
     }
@@ -85,6 +135,11 @@ const reqKeys = {
   entries: ['metadata', 'sectionHandle', 'title'],
   users: ['metadata', 'username', 'email'],
   option: ['label', 'value', 'selected', 'valid'],
+}
+
+const metadataKeys = {
+  entries: ['id', 'entryType', 'sectionId', 'siteId', 'url', 'uri', 'fullUri', 'status', 'cpEditUrl'],
+
 }
 
 function isValidAddressResp(isArr = false) {
@@ -111,12 +166,16 @@ function isValidNavNodeResp(isArr = false) {
 
 function isValidAllDefaultFieldsResp(isArr = false) {
   const properties = {
+    metadata: [metadataKeys.entries, false],
+    sectionHandle: [[], false, 'string'],
+    title: [[], false, 'string'],
     address: [reqKeys.addresses, true],
     asset: [reqKeys.assets, true],
     buttonGroup: [reqKeys.option, false],
     categories: [['metadata', 'title', 'slug', 'uri'], true],
     checkboxes: [reqKeys.option, true],
     color: [['hex', 'rgb', 'hsl'], false],
+    contentBlock: [['richtext', 'singleMatrix', 'matrix'], false],
     country: [['name', 'countryCode', 'threeLetterCode', 'locale', 'currencyCode', 'timezones'], false],
     date: [['date', 'timezone'], false],
     dropdown: [reqKeys.option, false],

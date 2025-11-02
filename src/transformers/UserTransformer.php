@@ -8,25 +8,29 @@ class UserTransformer extends BaseTransformer
 {
     private User $user;
 
-    public function __construct(User $user)
+    public function __construct(User $user, array $predefinedFields = [])
     {
-        parent::__construct($user);
+        parent::__construct($user, $predefinedFields);
         $this->user = $user;
     }
 
     /**
      * @return array
      */
-    public function getTransformedData(array $predefinedFields = []): array
+    public function getTransformedData(): array
     {
         $transformedFields = $this->getTransformedFields();
 
-        return array_merge([
+        $data = [
             'metadata' => $this->getMetaData(),
             'username' => $this->user->username,
             'email' => $this->user->email,
             'fullName' => $this->user->fullName,
-        ], $transformedFields);
+        ];
+
+        $fullData = array_merge($data, $transformedFields);
+
+        return $this->smartFilter($fullData, array_keys($data));
     }
 
     /**

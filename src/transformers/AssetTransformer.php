@@ -14,28 +14,29 @@ class AssetTransformer extends BaseTransformer
 {
     private Asset $asset;
 
-    public function __construct(Asset $asset)
+    public function __construct(Asset $asset, array $predefinedFields = [])
     {
-        parent::__construct($asset);
+        parent::__construct($asset, $predefinedFields);
         $this->asset = $asset;
     }
 
     /**
-     * @param array $predefinedFields
      * @return array
      * @throws ImageTransformException
      * @throws InvalidConfigException
      * @throws InvalidFieldException
      */
-    public function getTransformedData(array $predefinedFields = []): array
+    public function getTransformedData(): array
     {
         $imageMode = AssetHelper::getAssetMode();
 
         if ($imageMode === AssetMode::IMAGERX) {
-            return $this->imagerXTransformer();
+            $data = $this->imagerXTransformer();
+        } else {
+            $data = $this->defaultImageTransformer();
         }
 
-        return $this->defaultImageTransformer();
+        return $this->smartFilter($data, array_keys($data));
     }
 
     /**

@@ -8,25 +8,29 @@ class CategoryTransformer extends BaseTransformer
 {
     private Category $category;
 
-    public function __construct(Category $category)
+    public function __construct(Category $category, array $predefinedFields = [])
     {
-        parent::__construct($category);
+        parent::__construct($category, $predefinedFields);
         $this->category = $category;
     }
 
     /**
      * @return array
      */
-    public function getTransformedData(array $predefinedFields = []): array
+    public function getTransformedData(): array
     {
         $transformedFields = $this->getTransformedFields();
 
-        return array_merge([
-        'metadata' => $this->getMetaData(),
-        'title' => $this->category->title,
-        'slug' => $this->category->slug,
-        'uri' => $this->category->uri,
-    ], $transformedFields);
+        $data = [
+            'metadata' => $this->getMetaData(),
+            'title' => $this->category->title,
+            'slug' => $this->category->slug,
+            'uri' => $this->category->uri,
+        ];
+
+        $fullData = array_merge($data, $transformedFields);
+
+        return $this->smartFilter($fullData, array_keys($data));
     }
 
     /**

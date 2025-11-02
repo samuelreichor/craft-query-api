@@ -44,4 +44,13 @@ class Settings extends Model
      * Defines where ts definitions get created. Aliases can be used here as well.
      */
     public string $typeGenerationOutputPath = '@root/queryApiTypes.ts';
+
+    /*
+     * Defines how aggressive the fields() method is.
+     * If true, all default values such as sectionHandle or metadata get only returned,
+     * if they are actually defined in the fields() method.
+     *
+     * Todo: Remove this setting in v4 and make it default = true.
+     */
+    public bool $hardPick = false;
 }

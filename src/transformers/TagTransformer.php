@@ -8,23 +8,24 @@ class TagTransformer extends BaseTransformer
 {
     private Tag $tag;
 
-    public function __construct(Tag $tag)
+    public function __construct(Tag $tag, array $predefinedFields = [])
     {
-        parent::__construct($tag);
+        parent::__construct($tag, $predefinedFields);
         $this->tag = $tag;
     }
 
     /**
-     * @param array $predefinedFields
      * @return array
      */
-    public function getTransformedData(array $predefinedFields = []): array
+    public function getTransformedData(): array
     {
-        return [
+        $data = [
             'metadata' => $this->getMetaData(),
             'title' => $this->tag->title,
             'slug' => $this->tag->slug,
         ];
+
+        return $this->smartFilter($data, array_keys($data));
     }
 
     /**
