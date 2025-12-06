@@ -294,6 +294,17 @@ class TypescriptService extends Component
 
             $assetType .= Typescript::buildTsType($srcSetArr, 'CraftAssetRatio') . "\n\n";
             $baseAssetType['srcSets'] = 'CraftAssetRatio';
+        } else {
+            $srcSetKeys = AssetHelper::getCraftTransformKeys();
+            if (!empty($srcSetKeys)) {
+                $srcSetArr = [];
+                foreach ($srcSetKeys as $srcSetKey) {
+                    $srcSetArr[$srcSetKey] = 'string';
+                }
+
+                $assetType .= Typescript::buildTsType($srcSetArr, 'CraftAssetRatio') . "\n\n";
+                $baseAssetType['srcSets'] = 'CraftAssetRatio';
+            }
         }
 
         $volumes = Craft::$app->volumes->getAllVolumes();
