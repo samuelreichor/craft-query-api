@@ -4,6 +4,7 @@ namespace samuelreichoer\queryapi\helpers;
 
 use Craft;
 use samuelreichoer\queryapi\enums\AssetMode;
+use samuelreichoer\queryapi\QueryApi;
 
 class AssetHelper
 {
@@ -26,5 +27,16 @@ class AssetHelper
         $transforms = include $configPath;
 
         return $transforms ? array_keys($transforms) : [];
+    }
+
+    public static function getCraftTransformKeys(): array
+    {
+        $transforms = QueryApi::getInstance()->getSettings()->assetTransforms ?? [];
+        return array_keys($transforms);
+    }
+
+    public static function getCraftTransforms(): array
+    {
+        return QueryApi::getInstance()->getSettings()->assetTransforms ?? [];
     }
 }

@@ -53,4 +53,11 @@ class Settings extends Model
      * Todo: Remove this setting in v4 and make it default = true.
      */
     public bool $hardPick = false;
+
+    /**
+     * Define named image transforms with srcset configurations.
+     * Key = Craft Transform Handle, Value = Array of srcset widths
+     * Example: ['thumbnail' => ['400w', '800w', '1200w']]
+     */
+    public array $assetTransforms = [];
 }

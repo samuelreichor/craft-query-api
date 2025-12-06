@@ -30,11 +30,10 @@ class AssetTransformer extends BaseTransformer
     {
         $imageMode = AssetHelper::getAssetMode();
 
-        if ($imageMode === AssetMode::IMAGERX) {
-            $data = $this->imagerXTransformer();
-        } else {
-            $data = $this->defaultImageTransformer();
-        }
+        $data = match ($imageMode) {
+            AssetMode::IMAGERX => $this->imagerXTransformer(),
+            AssetMode::CRAFT => $this->craftTransformer(),
+        };
 
         return $this->smartFilter($data, array_keys($data));
     }
@@ -66,7 +65,7 @@ class AssetTransformer extends BaseTransformer
     private function imagerXTransformer(): array
     {
         $data = $this->defaultImageTransformer();
-        $data['srcSets'] = $this->getAllAvailableSrcSets();
+        $data['srcSets'] = $this->getAllImagerXSrcSets();
 
         return $data;
     }
@@ -93,7 +92,7 @@ class AssetTransformer extends BaseTransformer
     /**
      * @return array
      */
-    private function getAllAvailableSrcSets(): array
+    private function getAllImagerXSrcSets(): array
     {
         $transforms = AssetHelper::getImagerXTransformKeys();
         $imagerX = Craft::$app->plugins->getPlugin('imager-x');
@@ -105,6 +104,40 @@ class AssetTransformer extends BaseTransformer
                 $transformedImages = $imagerClass->transformImage($this->asset, $transform);
                 $srcSetArr[$transform] = $imagerClass->srcset($transformedImages);
             }
+        }
+
+        return $srcSetArr;
+    }
+
+    /**
+     * @return array
+     * @throws InvalidConfigException
+     * @throws ImageTransformException
+     * @throws InvalidFieldException
+     */
+    private function craftTransformer(): array
+    {
+        $data = $this->defaultImageTransformer();
+        $srcSets = $this->getAllCraftSrcSets();
+
+        if (!empty($srcSets)) {
+            $data['srcSets'] = $srcSets;
+        }
+
+        return $data;
+    }
+
+    private function getAllCraftSrcSets(): array
+    {
+        $transforms = AssetHelper::getCraftTransforms();
+        $srcSetArr = [];
+
+        foreach ($transforms as $transformHandle => $sizes) {
+            if (empty($sizes)) {
+                continue;
+            }
+
+            $srcSetArr[$transformHandle] = $this->asset->getSrcset($sizes, $transformHandle);
         }
 
         return $srcSetArr;
