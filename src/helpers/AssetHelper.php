@@ -39,4 +39,45 @@ class AssetHelper
     {
         return QueryApi::getInstance()->getSettings()->assetTransforms ?? [];
     }
+
+    /**
+     * Get srcset sizes for a specific transform handle.
+     *
+     * @param string $transformHandle
+     * @return array
+     */
+    public static function getSrcsetByTransformHandle(string $transformHandle): array
+    {
+        $transforms = self::getCraftTransforms();
+        return $transforms[$transformHandle]['srcset'] ?? [];
+    }
+
+    /**
+     * Get transforms that should be generated on save for a specific volume handle.
+     *
+     * @param string $volumeHandle
+     * @return array Transform handles that should be generated for this volume
+     */
+    public static function getTransformsForVolume(string $volumeHandle): array
+    {
+        $transforms = self::getCraftTransforms();
+        $applicableTransforms = [];
+
+        foreach ($transforms as $transformHandle => $config) {
+            $generateOnSaveVolumes = $config['generateOnSaveVolumes'] ?? false;
+
+            // true = generate for all volumes
+            if ($generateOnSaveVolumes === true) {
+                $applicableTransforms[] = $transformHandle;
+                continue;
+            }
+
+            // array = generate only for specific volumes
+            if (is_array($generateOnSaveVolumes) && in_array($volumeHandle, $generateOnSaveVolumes, true)) {
+                $applicableTransforms[] = $transformHandle;
+            }
+        }
+
+        return $applicableTransforms;
+    }
 }
