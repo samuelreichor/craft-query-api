@@ -1,5 +1,14 @@
 # Release Notes for Craft Query API
 
+## 3.7.0 - 2025-12-07
+
+### Added
+
+- Add support for native image transforms. 
+- Add `assetTransforms` setting, for defining srcSets for native image transforms.
+- Add `query-api/image-transforms/generate` command to bulk generate image transforms. 
+- Add `generateOnSaveVolumes` to generate images upfront, before a request happens.
+
 ## 3.6.1 - 2025-11-02
 
 ### Fixed
