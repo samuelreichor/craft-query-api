@@ -129,10 +129,12 @@ class AssetTransformer extends BaseTransformer
 
     private function getAllCraftSrcSets(): array
     {
-        $transforms = AssetHelper::getCraftTransforms();
+        $transformKeys = AssetHelper::getCraftTransformKeys();
         $srcSetArr = [];
 
-        foreach ($transforms as $transformHandle => $sizes) {
+        foreach ($transformKeys as $transformHandle) {
+            $sizes = AssetHelper::getSrcsetByTransformHandle($transformHandle);
+
             if (empty($sizes)) {
                 continue;
             }

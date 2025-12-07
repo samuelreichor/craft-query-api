@@ -4,13 +4,19 @@ namespace samuelreichoer\queryapi;
 
 use Craft;
 use craft\base\Plugin;
+use craft\elements\Asset;
+use craft\events\ElementEvent;
 use craft\events\RegisterCacheOptionsEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
+use craft\services\Elements;
 use craft\services\ProjectConfig;
 use craft\services\UserPermissions;
 use craft\utilities\ClearCaches;
 use craft\web\UrlManager;
+use samuelreichoer\queryapi\enums\AssetMode;
+use samuelreichoer\queryapi\helpers\AssetHelper;
+use samuelreichoer\queryapi\jobs\GenerateAssetTransformsJob;
 use samuelreichoer\queryapi\models\Settings;
 use samuelreichoer\queryapi\services\CacheService;
 use samuelreichoer\queryapi\services\ElementQueryService;
@@ -73,6 +79,10 @@ class QueryApi extends Plugin
             $this->_registerCpRoutes();
             $this->_registerCpTwigExtensions();
             $this->_registerPermissions();
+
+            if (AssetHelper::getAssetMode() === AssetMode::CRAFT) {
+                $this->_registerOnSaveAssetListener();
+            }
         }
 
         if (Craft::$app->getRequest()->getIsSiteRequest()) {
@@ -251,6 +261,43 @@ class QueryApi extends Plugin
             }
             $this->typescript->generateTsFile($outputPath);
         });
+    }
+
+    private function _registerOnSaveAssetListener(): void
+    {
+        Event::on(Elements::class,
+            Elements::EVENT_AFTER_SAVE_ELEMENT,
+            static function(ElementEvent $event) {
+                $element = $event->element;
+
+                if (!$element instanceof Asset) {
+                    return;
+                }
+
+                if ($element->getScenario() === Asset::SCENARIO_INDEX) {
+                    return;
+                }
+
+                if ($element->getIsRevision() || $element->getIsDraft()) {
+                    return;
+                }
+
+                if ($element->kind !== 'image') {
+                    return;
+                }
+
+                $volumeHandle = $element->getVolume()->handle;
+                $transformHandles = AssetHelper::getTransformsForVolume($volumeHandle);
+
+                if (empty($transformHandles)) {
+                    return;
+                }
+
+                Craft::$app->getQueue()->push(new GenerateAssetTransformsJob([
+                    'assetId' => $element->id,
+                    'transformHandles' => $transformHandles,
+                ]));
+            });
     }
 
     /**

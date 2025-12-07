@@ -56,8 +56,18 @@ class Settings extends Model
 
     /**
      * Define named image transforms with srcset configurations.
-     * Key = Craft Transform Handle, Value = Array of srcset widths
-     * Example: ['thumbnail' => ['400w', '800w', '1200w']]
+     * The key is the handle of the named image transform.
+     * Example:
+     * 'assetTransforms' => [
+     *      'portrait' => [
+     *          'srcset' => ['100w', '200w'],
+     *          'generateOnSaveVolumes' => ['graphics']
+     *      ],
+     *       'landscape' => [
+     *           'srcset' => ['1x', '2x'],
+     *           'generateOnSaveVolumes' => true,
+     *       ],
+     * ],
      */
     public array $assetTransforms = [];
 }
