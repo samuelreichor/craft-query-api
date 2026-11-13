@@ -8,6 +8,6 @@ auth:bearer {
 
 tests {
   test("should be valid json", function () {
-    expect(res.headers.get('Content-Type')).to.contain('application/json')
+    expect(res.getHeader('content-type')).to.contain('application/json')
   })
 }
