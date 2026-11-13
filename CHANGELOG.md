@@ -1,5 +1,13 @@
 # Release Notes for Craft Query API
 
+## 3.8.0 - 2026-11-13
+
+### Added
+
+- Add `webhooks` setting to notify frontends (e.g. to purge their caches) whenever Query API caches get invalidated.
+- Add `cacheTagsHeader` setting to expose the cache tags of a response as a header.
+- Add `query-api/cache/invalidate-scheduled` command to invalidate caches of entries that went live or expired since the last run.
+
 ## 3.7.0 - 2025-12-07
 
 ### Added
