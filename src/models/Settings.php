@@ -84,4 +84,11 @@ class Settings extends Model
      * ],
      */
     public array $webhooks = [];
+
+    /**
+     * Name of the response header that contains the cache tags of a response (space separated).
+     * Lets the frontend tag its own cache entries, so webhooks can invalidate them precisely.
+     * Set to null to disable the header.
+     */
+    public ?string $cacheTagsHeader = null;
 }

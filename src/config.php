@@ -143,5 +143,18 @@ return [
         //         'secret' => '$FRONTEND_REVALIDATE_SECRET',
         //     ],
         // ],
+
+
+        /**
+         * ---------------------------------------------------------------------
+         * Cache Tags Header
+         * ---------------------------------------------------------------------
+         *
+         * If set, every API response contains the cache tags of the response
+         * in this header (space separated). Tag your frontend cache entries
+         * with them, to invalidate exactly the tags sent by the webhook.
+         *
+         */
+        // 'cacheTagsHeader' => 'X-Query-Api-Cache-Tags',
     ],
 ];

@@ -83,14 +83,19 @@ class DefaultController extends Controller
         }
 
         // Return cached query data
-        $cacheKey = Constants::CACHE_TAG_GlOBAL . $elementType . '_' . Utils::generateCacheKey([
+        // Cached value contains the data and its cache tags: ['data' => mixed, 'tags' => string[]]
+        $cacheKey = Constants::CACHE_TAG_GlOBAL . 'v2_' . $elementType . '_' . Utils::generateCacheKey([
                 'schema' => $schema->uid,
                 'params' => $params,
             ]);
 
         $duration = QueryApi::getInstance()->cache->getCacheDuration();
-        if ($duration > 0 && $this->getIsCacheableRequest($request) && ($result = Craft::$app->getCache()->get($cacheKey))) {
-            return $this->asJson($result);
+        if ($duration > 0 && $this->getIsCacheableRequest($request)) {
+            $cached = Craft::$app->getCache()->get($cacheKey);
+            if (is_array($cached) && array_key_exists('data', $cached)) {
+                $this->_setCacheTagsHeader($cached['tags'] ?? []);
+                return $this->asJson($cached['data']);
+            }
         }
 
         Craft::$app->getElements()->startCollectingCacheInfo();
@@ -117,7 +122,7 @@ class DefaultController extends Controller
             try {
                 Craft::$app->getCache()->set(
                     $cacheKey,
-                    $finalResult,
+                    ['data' => $finalResult, 'tags' => $tags],
                     $duration,
                     $combinedDependency
                 );
@@ -126,7 +131,7 @@ class DefaultController extends Controller
             }
         }
 
-
+        $this->_setCacheTagsHeader($tags);
         return $this->asJson($finalResult);
     }
 
@@ -191,6 +196,9 @@ class DefaultController extends Controller
         $tags[] = Constants::CACHE_TAG_GlOBAL;
         $combinedDependency = new TagDependency(['tags' => $tags]);
 
+        // The response object is cached, so the header is cached along with it.
+        $this->_setCacheTagsHeader($tags);
+
         Craft::$app->getCache()->set(
             $cacheKey,
             $finalResult,
@@ -199,6 +207,23 @@ class DefaultController extends Controller
         );
 
         return $finalResult;
+    }
+
+    /**
+     * Exposes the cache tags of the response, so frontends can tag their own caches with them.
+     *
+     * @param string[] $tags
+     */
+    private function _setCacheTagsHeader(array $tags): void
+    {
+        $headerName = QueryApi::getInstance()->getSettings()->cacheTagsHeader;
+        if (!$headerName || empty($tags)) {
+            return;
+        }
+
+        $headers = $this->response->getHeaders();
+        $headers->set($headerName, implode(' ', array_unique($tags)));
+        $headers->set('Access-Control-Expose-Headers', $headerName);
     }
 
     private function _setCorsHeaders(): void
