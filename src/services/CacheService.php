@@ -14,6 +14,7 @@ class CacheService extends Component
     {
         $cache = Craft::$app->getCache();
         TagDependency::invalidate($cache, Constants::CACHE_TAG_GlOBAL);
+        QueryApi::getInstance()->webhooks->queueTags([Constants::CACHE_TAG_GlOBAL]);
         Craft::info(
             'All query API caches cleared',
             __METHOD__

@@ -6,6 +6,7 @@ use Craft;
 use craft\base\Plugin;
 use craft\elements\Asset;
 use craft\events\ElementEvent;
+use craft\events\InvalidateElementCachesEvent;
 use craft\events\RegisterCacheOptionsEvent;
 use craft\events\RegisterUrlRulesEvent;
 use craft\events\RegisterUserPermissionsEvent;
@@ -23,6 +24,7 @@ use samuelreichoer\queryapi\services\ElementQueryService;
 use samuelreichoer\queryapi\services\SchemaService;
 use samuelreichoer\queryapi\services\TokenService;
 use samuelreichoer\queryapi\services\TypescriptService;
+use samuelreichoer\queryapi\services\WebhookService;
 use samuelreichoer\queryapi\twigextensions\AuthHelper;
 use Throwable;
 use yii\base\Event;
@@ -41,6 +43,7 @@ use yii\log\FileTarget;
  * @property CacheService $cache
  * @property ElementQueryService $query
  * @property TypescriptService $typescript
+ * @property WebhookService $webhooks
  */
 class QueryApi extends Plugin
 {
@@ -62,6 +65,7 @@ class QueryApi extends Plugin
                 'cache' => new CacheService(),
                 'query' => new ElementQueryService(),
                 'typescript' => new TypescriptService(),
+                'webhooks' => new WebhookService(),
             ],
         ];
     }
@@ -74,6 +78,10 @@ class QueryApi extends Plugin
         $this->_initLogger();
         $this->_registerConfigListeners();
         $this->_registerClearCaches();
+
+        if (!empty($this->getSettings()->webhooks)) {
+            $this->_registerCacheWebhooks();
+        }
 
         if (Craft::$app->getRequest()->getIsCpRequest()) {
             $this->_registerCpRoutes();
@@ -235,6 +243,13 @@ class QueryApi extends Plugin
                 'label' => Craft::t('query-api', 'Query API data cache'),
                 'action' => [self::$plugin->cache, 'invalidateCaches'],
             ];
+        });
+    }
+
+    private function _registerCacheWebhooks(): void
+    {
+        Event::on(Elements::class, Elements::EVENT_INVALIDATE_CACHES, function(InvalidateElementCachesEvent $event) {
+            $this->webhooks->handleInvalidatedElementTags($event->tags);
         });
     }
 

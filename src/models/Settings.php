@@ -70,4 +70,18 @@ class Settings extends Model
      * ],
      */
     public array $assetTransforms = [];
+
+    /**
+     * Endpoints that get notified (POST, JSON) whenever Query API caches are invalidated.
+     * Values support environment variables.
+     * Example:
+     * 'webhooks' => [
+     *      [
+     *          'url' => '$FRONTEND_REVALIDATE_URL',
+     *          'secret' => '$FRONTEND_REVALIDATE_SECRET',
+     *          'headers' => ['X-Custom' => 'value'],
+     *      ],
+     * ],
+     */
+    public array $webhooks = [];
 }

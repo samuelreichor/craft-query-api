@@ -119,5 +119,29 @@ return [
                  'generateOnSaveVolumes' => true,
              ],
          ],*/
+
+
+        /**
+         * ---------------------------------------------------------------------
+         * Cache Invalidation Webhooks
+         * ---------------------------------------------------------------------
+         *
+         * Endpoints that receive a POST request whenever Query API caches get
+         * invalidated (element saved/deleted, caches cleared, schema changed).
+         * Changes are batched per request and sent via the queue.
+         *
+         * Payload: {"event":"invalidate","all":false,"tags":["element::123", ...],"timestamp":1700000000}
+         * If a secret is set, the request contains an `X-Query-Api-Signature`
+         * header: `sha256=` + HMAC-SHA256 of the raw body.
+         *
+         * For entries going live (postDate) or expiring (expiryDate), run
+         * `php craft query-api/cache/invalidate-scheduled` via cron (e.g. every minute).
+         */
+        // 'webhooks' => [
+        //     [
+        //         'url' => '$FRONTEND_REVALIDATE_URL',
+        //         'secret' => '$FRONTEND_REVALIDATE_SECRET',
+        //     ],
+        // ],
     ],
 ];
